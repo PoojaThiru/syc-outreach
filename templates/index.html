@@ -164,16 +164,8 @@
     <button class="toggle-btn inactive" id="btn-custom" onclick="switchMode('custom')">Enter custom contact</button>
   </div>
 
-  <!-- Test contacts -->
   <div id="test-mode">
-    <div class="contact-grid">
-      {% for c in contacts %}
-      <button class="contact-btn" id="contact-{{ c.id }}" onclick="selectContact({{ c | tojson }})">
-        <div class="cn">{{ c.name }}</div>
-        <div class="cl">{{ c.label }}</div>
-      </button>
-      {% endfor %}
-    </div>
+    <div class="contact-grid" id="contact-grid"></div>
 
     <div class="preview hidden" id="preview">
       <div class="preview-top">
@@ -187,7 +179,6 @@
     </div>
   </div>
 
-  <!-- Custom form -->
   <div id="custom-mode" class="hidden">
     <div class="custom-form">
       <div><label>Name</label><input id="c-name" type="text" placeholder="Sarah Kim"></div>
@@ -246,8 +237,18 @@
 </div>
 
 <script>
+  const contacts = {{ contacts | tojson }};
   let selectedContact = null;
   let currentMode = 'test';
+
+  contacts.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'contact-btn';
+    btn.id = 'contact-' + c.id;
+    btn.innerHTML = `<div class="cn">${c.name}</div><div class="cl">${c.label}</div>`;
+    btn.addEventListener('click', () => selectContact(c));
+    document.getElementById('contact-grid').appendChild(btn);
+  });
 
   const categoryColors = {
     founder_prospect: '#6366f1',
