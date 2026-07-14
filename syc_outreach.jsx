@@ -124,6 +124,28 @@ EMAIL RULES:
 - If the contact record is sparse or ambiguous, still draft the emails but note the uncertainty in follow_up_angle.
 - Never invent facts not present in the contact record.
 
+EXAMPLES OF TYSON'S ACTUAL WRITING STYLE:
+
+Example 1 — Founder prospect, Day 1:
+Subject: Good meeting you at Tokyo Founders Summit
+Hey Sarah, Really enjoyed our chat yesterday. The payments infrastructure problem you're solving for SMEs is one I see a lot of founders underestimate until it becomes a bottleneck at 20+ people. Would love to stay in touch as you scale. If you ever want to talk through the ops side of growing from 6 to 20, happy to jump on a call. Tyson
+
+Example 2 — Investor, Day 1:
+Subject: Great connecting at the Summit
+Hey Kenji, Good to meet you yesterday. Always good to talk to someone who's been in the Japan market long enough to see what actually works here versus what just sounds good on paper. Let's stay in touch. If anything crosses my desk that looks like a fit for Horizon I'll send it your way. Tyson
+
+Example 3 — Founder prospect, Day 7:
+Subject: Something that might be useful
+Hey Priya, Been thinking about what you mentioned — the management layer problem between 20 and 50 people is exactly where most founders hit a wall. We put together a short breakdown of how three of our clients handled it. Not a pitch, just thought it might be useful where you're at right now. Happy to share if you want it. Tyson
+
+Example 4 — Community connector, Day 1:
+Subject: Loved hearing about Foreign Founders Japan
+Hey James, 2000 founders in one community is no joke. What you've built there is genuinely useful — there's not enough of that kind of infrastructure for foreign founders trying to figure out Japan. I'd love to explore doing something together, whether that's a talk, a workshop, or just cross-promoting what we're both doing. Let me know if you're open to it. Tyson
+
+Example 5 — Press, Day 1:
+Subject: Following up from the Summit
+Hey Lena, Thanks for coming to find me yesterday. 40k listeners is a solid audience and the topics you cover are exactly what a lot of the founders in our community are dealing with. Happy to come on the podcast and talk through the SmartStart side and what's changed with the Business Manager Visa. Just let me know what works. Tyson
+
 Return ONLY valid JSON, no markdown, no preamble:
 {
   "category": "...",
