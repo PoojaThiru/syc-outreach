@@ -4,143 +4,144 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SYC Event Outreach</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: #0f0f13;
-      color: #e2e8f0;
+      background: #f0f4ff;
+      color: #1a1a2e;
       min-height: 100vh;
     }
 
     .header {
-      background: #16161d;
-      border-bottom: 1px solid #2a2a3a;
-      padding: 16px 24px;
+      background: #2952cc;
+      padding: 16px 32px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
-    .header-icon {
-      width: 36px; height: 36px;
+    .header-logo {
+      width: 38px; height: 38px;
+      background: #fff;
       border-radius: 8px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
+      font-weight: 800; font-size: 15px; color: #2952cc; flex-shrink: 0;
     }
 
-    .header-title { font-weight: 700; font-size: 16px; color: #f1f5f9; }
-    .header-sub { font-size: 12px; color: #64748b; }
+    .header-title { font-weight: 700; font-size: 17px; color: #fff; }
+    .header-sub { font-size: 12px; color: #a8c0ff; }
 
-    .container { max-width: 860px; margin: 0 auto; padding: 24px; }
+    .container { max-width: 880px; margin: 0 auto; padding: 32px 24px; }
 
-    .section-title { font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
-
-    .mode-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+    .mode-toggle { display: flex; gap: 10px; margin-bottom: 20px; }
 
     .toggle-btn {
-      padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
-      cursor: pointer; border: none; transition: all 0.15s;
+      padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 2px solid #2952cc; transition: all 0.15s; font-family: inherit;
     }
-    .toggle-btn.active { background: #6366f1; color: #fff; }
-    .toggle-btn.inactive { background: #1e1e2e; color: #94a3b8; }
+    .toggle-btn.active { background: #2952cc; color: #fff; }
+    .toggle-btn.inactive { background: #fff; color: #2952cc; }
 
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
 
     .contact-btn {
-      padding: 10px 14px; border-radius: 8px; cursor: pointer;
-      text-align: left; border: none; border-left: 3px solid #2a2a3a;
-      background: #1a1a24; transition: all 0.15s;
+      padding: 12px 16px; border-radius: 8px; cursor: pointer;
+      text-align: left; border: 2px solid #dce8ff;
+      background: #fff; transition: all 0.15s; font-family: inherit;
     }
-    .contact-btn:hover { background: #1e1e30; }
-    .contact-btn.selected { background: #1e1e3a; border-left-color: #6366f1; }
-    .contact-btn .cn { font-size: 12px; font-weight: 600; color: #e2e8f0; margin-bottom: 2px; }
-    .contact-btn .cl { font-size: 11px; color: #64748b; }
+    .contact-btn:hover { border-color: #2952cc; background: #f0f4ff; }
+    .contact-btn.selected { border-color: #2952cc; background: #e8eeff; }
+    .contact-btn .cn { font-size: 13px; font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
+    .contact-btn .cl { font-size: 11px; color: #6b7fa8; }
 
-    .custom-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .custom-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
     .custom-form .full { grid-column: 1 / -1; }
 
-    label { font-size: 11px; color: #64748b; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    label { font-size: 11px; color: #6b7fa8; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
 
     input, textarea {
-      width: 100%; padding: 8px 10px; border-radius: 6px;
-      border: 1px solid #2a2a3a; background: #1a1a24;
-      color: #e2e8f0; font-size: 13px; font-family: inherit;
+      width: 100%; padding: 9px 12px; border-radius: 6px;
+      border: 2px solid #dce8ff; background: #fff;
+      color: #1a1a2e; font-size: 13px; font-family: inherit;
+      transition: border-color 0.15s;
     }
+    input:focus, textarea:focus { outline: none; border-color: #2952cc; }
     textarea { resize: vertical; }
 
     .preview {
-      background: #1a1a24; border-radius: 10px;
-      padding: 14px 16px; margin-bottom: 16px;
-      border: 1px solid #2a2a3a;
+      background: #fff; border-radius: 10px;
+      padding: 16px 18px; margin-bottom: 20px;
+      border: 2px solid #dce8ff;
     }
     .preview-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .preview-name { font-weight: 600; font-size: 15px; color: #f1f5f9; }
-    .preview-role { font-size: 13px; color: #64748b; margin-left: 8px; }
-    .preview-event { font-size: 11px; color: #94a3b8; background: #0f0f13; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
-    .preview-notes { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+    .preview-name { font-weight: 700; font-size: 15px; color: #1a1a2e; }
+    .preview-role { font-size: 13px; color: #6b7fa8; margin-left: 8px; }
+    .preview-event { font-size: 11px; color: #2952cc; background: #e8eeff; padding: 3px 10px; border-radius: 20px; white-space: nowrap; font-weight: 600; }
+    .preview-notes { font-size: 13px; color: #4a5568; line-height: 1.6; }
 
     .run-btn {
-      width: 100%; padding: 12px; border-radius: 8px; border: none;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff; font-weight: 600; font-size: 14px;
-      cursor: pointer; margin-bottom: 20px; transition: all 0.2s;
-      font-family: inherit;
+      width: 100%; padding: 13px; border-radius: 8px; border: none;
+      background: #2952cc;
+      color: #fff; font-weight: 700; font-size: 14px;
+      cursor: pointer; margin-bottom: 24px; transition: all 0.2s;
+      font-family: inherit; letter-spacing: 0.02em;
     }
-    .run-btn:disabled { background: #2a2a3a; cursor: not-allowed; }
+    .run-btn:hover { background: #1e3fa8; }
+    .run-btn:disabled { background: #b0c0e0; cursor: not-allowed; }
 
     .error {
-      background: #2d1b1b; border: 1px solid #7f1d1d;
-      border-radius: 8px; padding: 14px; color: #fca5a5;
+      background: #fff0f0; border: 2px solid #ffb0b0;
+      border-radius: 8px; padding: 14px; color: #c0392b;
       font-size: 13px; margin-bottom: 16px;
     }
 
     .result-card {
-      background: #1a1a24; border-radius: 10px;
-      padding: 16px; border: 1px solid #2a2a3a; margin-bottom: 14px;
+      background: #fff; border-radius: 10px;
+      padding: 18px; border: 2px solid #dce8ff; margin-bottom: 16px;
     }
 
     .category-badge {
-      color: #fff; font-size: 12px; font-weight: 600;
-      padding: 3px 10px; border-radius: 20px;
-      display: inline-block; margin-bottom: 10px;
+      color: #fff; font-size: 12px; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px;
+      display: inline-block; margin-bottom: 12px; letter-spacing: 0.03em;
     }
 
-    .angle { font-size: 14px; color: #e2e8f0; font-style: italic; }
+    .angle { font-size: 14px; color: #2952cc; font-style: italic; font-weight: 500; }
 
     .flags {
-      margin-top: 10px; padding: 8px 12px;
-      background: #1e1a0e; border-radius: 6px;
-      border: 1px solid #78350f;
+      margin-top: 12px; padding: 10px 14px;
+      background: #fffbea; border-radius: 6px;
+      border: 2px solid #f6c90e;
     }
-    .flags-label { font-size: 11px; font-weight: 600; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.05em; }
-    .flags-text { font-size: 12px; color: #fcd34d; }
+    .flags-label { font-size: 11px; font-weight: 700; color: #b8860b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .flags-text { font-size: 12px; color: #7a6000; }
 
-    .email-tabs { background: #1a1a24; border-radius: 10px; border: 1px solid #2a2a3a; overflow: hidden; }
-    .email-tab-nav { display: flex; border-bottom: 1px solid #2a2a3a; }
+    .email-tabs { background: #fff; border-radius: 10px; border: 2px solid #dce8ff; overflow: hidden; }
+    .email-tab-nav { display: flex; border-bottom: 2px solid #dce8ff; background: #f0f4ff; }
 
     .email-tab-btn {
-      flex: 1; padding: 10px; border: none; cursor: pointer;
-      font-size: 13px; font-weight: 500; background: transparent;
-      color: #64748b; border-bottom: 2px solid transparent;
+      flex: 1; padding: 11px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; background: transparent;
+      color: #6b7fa8; border-bottom: 3px solid transparent;
       transition: all 0.15s; font-family: inherit;
     }
-    .email-tab-btn.active { background: #0f0f13; color: #818cf8; border-bottom-color: #6366f1; }
+    .email-tab-btn.active { background: #fff; color: #2952cc; border-bottom-color: #2952cc; }
 
-    .email-content { padding: 16px; display: none; }
+    .email-content { padding: 18px; display: none; }
     .email-content.active { display: block; }
 
-    .email-label { font-size: 12px; color: #64748b; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .email-subject { font-size: 14px; font-weight: 600; color: #e2e8f0; margin-bottom: 14px; }
-    .email-body { font-size: 14px; color: #cbd5e1; line-height: 1.75; white-space: pre-wrap; }
+    .email-label { font-size: 11px; color: #6b7fa8; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .email-subject { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 16px; }
+    .email-body { font-size: 14px; color: #4a5568; line-height: 1.8; white-space: pre-wrap; }
 
     .hidden { display: none; }
 
     .spinner {
       display: inline-block; width: 14px; height: 14px;
-      border: 2px solid #ffffff40; border-top-color: #fff;
+      border: 2px solid #ffffff60; border-top-color: #fff;
       border-radius: 50%; animation: spin 0.7s linear infinite;
       margin-right: 8px; vertical-align: middle;
     }
@@ -150,9 +151,9 @@
 <body>
 
 <div class="header">
-  <div class="header-icon">⚡</div>
+  <div class="header-logo">SYC</div>
   <div>
-    <div class="header-title">SYC Event Outreach System</div>
+    <div class="header-title">Event Outreach System</div>
     <div class="header-sub">Phase 1 — Contact Classification + Email Drafting</div>
   </div>
 </div>
@@ -192,7 +193,7 @@
   </div>
 
   <button class="run-btn" id="run-btn" onclick="runClassification()" disabled>
-    Run Classification →
+    Run Classification
   </button>
 
   <div class="error hidden" id="error"></div>
@@ -202,16 +203,16 @@
       <span class="category-badge" id="r-category"></span>
       <div class="angle" id="r-angle"></div>
       <div class="flags hidden" id="r-flags">
-        <span class="flags-label">⚠ Flags: </span>
+        <span class="flags-label">Flags: </span>
         <span class="flags-text" id="r-flags-text"></span>
       </div>
     </div>
 
     <div class="email-tabs">
       <div class="email-tab-nav">
-        <button class="email-tab-btn active" onclick="switchEmail('day1')">Day 1 — Reconnect</button>
-        <button class="email-tab-btn" onclick="switchEmail('day7')">Day 7 — Value-add</button>
-        <button class="email-tab-btn" onclick="switchEmail('day21')">Day 21 — Check-in</button>
+        <button class="email-tab-btn active" onclick="switchEmail('day1')">Day 1 Reconnect</button>
+        <button class="email-tab-btn" onclick="switchEmail('day7')">Day 7 Value Add</button>
+        <button class="email-tab-btn" onclick="switchEmail('day21')">Day 21 Check In</button>
       </div>
       <div class="email-content active" id="tab-day1">
         <div class="email-label">Subject</div>
@@ -251,12 +252,12 @@
   });
 
   const categoryColors = {
-    founder_prospect: '#6366f1',
-    investor: '#0ea5e9',
-    press_media: '#8b5cf6',
+    founder_prospect: '#2952cc',
+    investor: '#0891b2',
+    press_media: '#7c3aed',
     corporate_partner: '#0d9488',
     service_provider: '#64748b',
-    community_connector: '#f59e0b',
+    community_connector: '#d97706',
     other: '#94a3b8'
   };
 
@@ -297,7 +298,7 @@
   async function runClassification() {
     const btn = document.getElementById('run-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Classifying + drafting emails...';
+    btn.innerHTML = '<span class="spinner"></span>Classifying and drafting emails...';
     document.getElementById('result').classList.add('hidden');
     document.getElementById('error').classList.add('hidden');
 
@@ -357,7 +358,7 @@
     }
 
     btn.disabled = false;
-    btn.innerHTML = 'Run Classification →';
+    btn.innerHTML = 'Run Classification';
   }
 </script>
 </body>
