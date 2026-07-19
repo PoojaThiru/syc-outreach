@@ -1,6 +1,9 @@
 import os
 import json
+import base64
+import requests
 import anthropic
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
@@ -8,108 +11,255 @@ load_dotenv()
 
 app = Flask(__name__)
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+SERPER_API_KEY = os.getenv("SERPER_API_KEY")
+FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 
-SYSTEM_PROMPT = """You are an AI assistant for Tyson Batino, CEO of Scaling Your Company (SYC) and SmartStart Japan.
+contacts_db = []
+contact_id_counter = 1
 
-Tyson meets people at startup and business events across Japan. Your job is to read a contact record and return a structured JSON with:
-1. A contact category
-2. A personalised follow-up angle
-3. Three email drafts (Day 1, Day 7, Day 21)
+def get_next_id():
+    global contact_id_counter
+    cid = contact_id_counter
+    contact_id_counter += 1
+    return cid
 
-TYSON'S VOICE RULES (critical — every email must sound like him):
-- Direct and warm. No corporate fluff. No "I hope this message finds you well."
-- Mentions real specifics from the conversation — names, numbers, what was actually said
-- Honest about what SYC/SmartStart does and doesn't do
-- Short sentences. Active voice. Never more than 6 lines per email.
-- Admitting uncertainty is fine. Overselling is never fine.
-- Signs off as Tyson, never "Best regards" or "Sincerely"
+def search_person(name, company):
+    if not SERPER_API_KEY:
+        return ""
+    try:
+        res = requests.post("https://google.serper.dev/search", 
+            headers={"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"},
+            json={"q": f"{name} {company} Japan", "num": 5}
+        )
+        data = res.json()
+        snippets = [r.get("snippet", "") for r in data.get("organic", [])]
+        return " ".join(snippets[:3])
+    except:
+        return ""
 
-CONTACT CATEGORIES:
-- founder_prospect: Early to mid-stage founder who could become an SYC client
-- investor: VC, angel, or fund — relationship to cultivate, not pitch
-- press_media: Journalist, podcaster, content creator
-- corporate_partner: Enterprise or institution — BD angle
-- service_provider: Potential partner or vendor, not a client
-- community_connector: High-leverage network access, referral potential
-- other: Catch-all — add a note explaining why
+def scrape_website(url):
+    if not FIRECRAWL_API_KEY or not url:
+        return ""
+    try:
+        if not url.startswith("http"):
+            url = "https://" + url
+        res = requests.post("https://api.firecrawl.dev/v0/scrape",
+            headers={"Authorization": f"Bearer {FIRECRAWL_API_KEY}", "Content-Type": "application/json"},
+            json={"url": url, "pageOptions": {"onlyMainContent": True}}
+        )
+        data = res.json()
+        content = data.get("data", {}).get("markdown", "")
+        return content[:2000]
+    except:
+        return ""
 
-EMAIL RULES:
-- Day 1: Warm reconnect. Reference the event and one specific thing from the conversation. 4-5 lines max.
-- Day 7: Value-add. A resource, insight, or relevant SYC/SmartStart offering. Not a pitch — a genuine give. 4-6 lines.
-- Day 21: Light check-in. One or two lines. Open a door without pressure.
-- If sparse or ambiguous, still draft but note uncertainty in follow_up_angle.
-- Never invent facts not in the contact record.
+CARD_SCAN_PROMPT = """You are scanning a business card image. Extract ALL contact information visible on the card.
+If there are multiple business cards in the image, extract each one separately.
 
-EXAMPLES OF TYSON'S ACTUAL WRITING STYLE:
-
-Example 1 — Founder prospect, Day 1:
-Subject: Good meeting you at Tokyo Founders Summit
-Hey Sarah, Really enjoyed our chat yesterday. The payments infrastructure problem you're solving for SMEs is one I see a lot of founders underestimate until it becomes a bottleneck at 20+ people. Would love to stay in touch as you scale. If you ever want to talk through the ops side of growing from 6 to 20, happy to jump on a call. Tyson
-
-Example 2 — Investor, Day 1:
-Subject: Great connecting at the Summit
-Hey Kenji, Good to meet you yesterday. Always good to talk to someone who's been in the Japan market long enough to see what actually works here versus what just sounds good on paper. Let's stay in touch. If anything crosses my desk that looks like a fit for Horizon I'll send it your way. Tyson
-
-Example 3 — Founder prospect, Day 7:
-Subject: Something that might be useful
-Hey Priya, Been thinking about what you mentioned — the management layer problem between 20 and 50 people is exactly where most founders hit a wall. We put together a short breakdown of how three of our clients handled it. Not a pitch, just thought it might be useful where you're at right now. Happy to share if you want it. Tyson
-
-Example 4 — Community connector, Day 1:
-Subject: Loved hearing about Foreign Founders Japan
-Hey James, 2000 founders in one community is no joke. What you've built there is genuinely useful — there's not enough of that kind of infrastructure for foreign founders trying to figure out Japan. I'd love to explore doing something together, whether that's a talk, a workshop, or just cross-promoting what we're both doing. Let me know if you're open to it. Tyson
-
-Example 5 — Press, Day 1:
-Subject: Following up from the Summit
-Hey Lena, Thanks for coming to find me yesterday. 40k listeners is a solid audience and the topics you cover are exactly what a lot of the founders in our community are dealing with. Happy to come on the podcast and talk through the SmartStart side and what's changed with the Business Manager Visa. Just let me know what works. Tyson
-
-Return ONLY valid JSON, no markdown, no preamble:
+Return ONLY valid JSON, no markdown:
 {
-  "category": "...",
-  "follow_up_angle": "one sentence explaining the specific hook for this person",
-  "flags": "any conflicts, ambiguities, or missing info (or empty string)",
+  "cards": [
+    {
+      "name": "...",
+      "title": "...",
+      "company": "...",
+      "email": "...",
+      "phone": "...",
+      "website": "...",
+      "linkedin": "...",
+      "address": "..."
+    }
+  ]
+}
+
+If a field is not visible on the card, use an empty string. Never guess or invent information."""
+
+ENRICH_PROMPT = """You are helping build a contact profile for Tyson Batino, CEO of Scaling Your Company (SYC) in Japan.
+
+Based on the contact information and any web context provided, add useful context:
+- What their company does
+- The industry they operate in
+- Company size or stage if known
+- Any relevant background about the person
+- Why they might be relevant to a business coaching/scaling company in Japan
+
+Be honest about what you know vs what you are inferring. Keep it brief and practical.
+
+Return ONLY valid JSON, no markdown:
+{
+  "company_description": "...",
+  "industry": "...",
+  "enrichment_notes": "...",
+  "category": "founder_prospect|investor|press_media|corporate_partner|service_provider|community_connector|other",
+  "category_reason": "..."
+}"""
+
+CLASSIFY_PROMPT = """You are an AI assistant for Tyson Batino, CEO of Scaling Your Company (SYC) and SmartStart Japan.
+
+Read the contact record including any web context and enrichment data, then write follow-up email drafts.
+
+Use Tyson's voice:
+- Direct and warm. No corporate fluff.
+- Reference real specifics from notes and web context
+- Short sentences. Active voice. Max 6 lines per email.
+- Signs off as Tyson
+
+EXAMPLES OF TYSON'S VOICE:
+"Hey Sarah, Really enjoyed our chat yesterday. The payments infrastructure problem you're solving for SMEs is one I see a lot of founders underestimate until it becomes a bottleneck at 20+ people. Would love to stay in touch. Tyson"
+
+"Hey Kenji, Good to meet you yesterday. Always good to talk to someone who's been in the Japan market long enough to see what actually works. Let's stay in touch. Tyson"
+
+Return ONLY valid JSON:
+{
+  "follow_up_angle": "one sentence specific hook for this person",
+  "flags": "any issues or gaps noticed, or empty string",
   "day1": { "subject": "...", "body": "..." },
   "day7": { "subject": "...", "body": "..." },
   "day21": { "subject": "...", "body": "..." }
 }"""
 
-TEST_CONTACTS = [
-    {"id": 1, "label": "Early-stage founder (clear)", "name": "Sarah Kim", "title": "CEO", "company": "FinFlow KK", "email": "sarah@finflow.jp", "event": "Tokyo Founders Summit", "notes": "Team of 6, pre-Series A. Building B2B payments infra for SMEs in Japan. Asked specifically about SYC's scaling programme and how Tyson has helped other fintech founders grow ops without losing culture."},
-    {"id": 2, "label": "Investor (VC)", "name": "Kenji Mori", "title": "Partner", "company": "Horizon Ventures", "email": "k.mori@horizonvc.jp", "event": "Tokyo Founders Summit", "notes": "Leads Series A in B2B SaaS. Currently deploying Fund III. Interested in Japan-market expansion plays. Mentioned he follows Tyson on LinkedIn."},
-    {"id": 3, "label": "Press / podcaster", "name": "Lena Fischer", "title": "Host", "company": "Asia Startup Weekly", "email": "lena@asiastartupweekly.com", "event": "Tokyo Founders Summit", "notes": "Runs a podcast on foreign founders in Japan. 40k listeners. Wants to interview Tyson about SmartStart Japan and the Business Manager Visa changes."},
-    {"id": 4, "label": "Corporate / enterprise partner", "name": "Takashi Yamamoto", "title": "Head of Innovation", "company": "Mitsui Digital Lab", "email": "t.yamamoto@mitsui.co.jp", "event": "Tokyo Founders Summit", "notes": "Runs Mitsui's corporate accelerator. Looking for a partner to run founder coaching inside the programme. Could be a big BD opportunity for SYC."},
-    {"id": 5, "label": "Service provider", "name": "Amy Chen", "title": "COO", "company": "Nomad Legal KK", "email": "amy@nomadlegal.jp", "event": "Tokyo Founders Summit", "notes": "Runs a legal firm specialising in foreign company incorporation in Japan. Could refer clients to SYC or SmartStart. Not a coaching prospect herself."},
-    {"id": 6, "label": "Ambiguous — founder or investor?", "name": "David Park", "title": "Managing Director", "company": "Neon Capital", "email": "d.park@neoncap.io", "event": "Tokyo Founders Summit", "notes": "Talked for maybe 5 mins. He mentioned running a fund but also said he's personally building something on the side in edtech. Wasn't totally clear which hat he was wearing."},
-    {"id": 7, "label": "Sparse — minimal info", "name": "Riku Tanaka", "title": "", "company": "Stealth", "email": "riku.t@proton.me", "event": "Hokkaido Startup Mixer", "notes": "Gave me his card. Didn't say much. Something in AI."},
-    {"id": 8, "label": "Messy — contradictory info", "name": "Marie Dubois", "title": "Founder", "company": "Bloom Studio", "email": "marie@bloomstudio.fr", "event": "Hokkaido Startup Mixer", "notes": "French founder, based in Tokyo she said but the card says Paris. Runs a design studio but mentioned she's pivoting into SaaS. Interested in coaching but also said she's moving back to France in 3 months."},
-    {"id": 9, "label": "Strong referral potential", "name": "James Okafor", "title": "Community Lead", "company": "Foreign Founders Japan", "email": "james@ffj.community", "event": "Tokyo Founders Summit", "notes": "Runs a 2000-person community of foreign founders in Japan. Not a coaching client himself but has direct access to SYC's exact target audience. Mentioned he's looking for content partners and guest speakers."},
-    {"id": 10, "label": "Mid-stage founder, warm lead", "name": "Priya Nair", "title": "CEO", "company": "Kaizen HR", "email": "priya@kaizenhr.jp", "event": "Tokyo Founders Summit", "notes": "Series A, team of 22. Has heard of SYC before — a mutual connection mentioned Tyson. Currently struggling with management layer as the company grows from 20 to 50. This is exactly what SYC specialises in. Very warm."},
-]
-
 @app.route("/")
 def index():
-    return render_template("index.html", contacts=TEST_CONTACTS)
+    return render_template("index.html")
 
-@app.route("/classify", methods=["POST"])
-def classify():
+@app.route("/api/contacts", methods=["GET"])
+def get_contacts():
+    return jsonify({"success": True, "contacts": contacts_db})
+
+@app.route("/api/contacts", methods=["POST"])
+def add_contact():
     data = request.json
-    contact = data.get("contact")
-    
+    contact = data.get("contact", {})
+    contact["id"] = get_next_id()
+    contact["created_at"] = datetime.now().isoformat()
+    contact["timeline"] = []
+    contact["emails"] = {}
+    contact["enrichment"] = {}
+    contact["web_context"] = {}
+    contacts_db.append(contact)
+    return jsonify({"success": True, "contact": contact})
+
+@app.route("/api/scan-card", methods=["POST"])
+def scan_card():
+    data = request.json
+    image_data = data.get("image")
+    media_type = data.get("media_type", "image/jpeg")
+
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=1500,
-            system=SYSTEM_PROMPT,
+            max_tokens=1000,
             messages=[{
                 "role": "user",
-                "content": f"Contact record:\n{json.dumps(contact, indent=2)}"
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": image_data
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": CARD_SCAN_PROMPT
+                    }
+                ]
             }]
         )
         text = response.content[0].text
         clean = text.replace("```json", "").replace("```", "").strip()
         result = json.loads(clean)
+        return jsonify({"success": True, "cards": result.get("cards", [])})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route("/api/enrich", methods=["POST"])
+def enrich_contact():
+    data = request.json
+    contact = data.get("contact", {})
+
+    search_context = search_person(contact.get("name", ""), contact.get("company", ""))
+    website_context = scrape_website(contact.get("website", ""))
+
+    web_context = {
+        "search_results": search_context,
+        "website_content": website_context
+    }
+
+    try:
+        enrich_input = {**contact, "web_context": web_context}
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=800,
+            system=ENRICH_PROMPT,
+            messages=[{
+                "role": "user",
+                "content": f"Contact: {json.dumps(enrich_input, indent=2)}"
+            }]
+        )
+        text = response.content[0].text
+        clean = text.replace("```json", "").replace("```", "").strip()
+        result = json.loads(clean)
+
+        for c in contacts_db:
+            if c["id"] == contact.get("id"):
+                c["enrichment"] = result
+                c["web_context"] = web_context
+                c["category"] = result.get("category", "other")
+                break
+
+        return jsonify({"success": True, "enrichment": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route("/api/generate-emails/<int:contact_id>", methods=["POST"])
+def generate_emails(contact_id):
+    contact = next((c for c in contacts_db if c["id"] == contact_id), None)
+    if not contact:
+        return jsonify({"success": False, "error": "Contact not found"})
+
+    try:
+        context = {**contact}
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=1500,
+            system=CLASSIFY_PROMPT,
+            messages=[{
+                "role": "user",
+                "content": f"Contact record:\n{json.dumps(context, indent=2)}"
+            }]
+        )
+        text = response.content[0].text
+        clean = text.replace("```json", "").replace("```", "").strip()
+        result = json.loads(clean)
+
+        for c in contacts_db:
+            if c["id"] == contact_id:
+                c["emails"] = result
+                c["timeline"].append({
+                    "type": "emails_generated",
+                    "date": datetime.now().isoformat(),
+                    "note": "Email drafts generated"
+                })
+                break
+
         return jsonify({"success": True, "result": result})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+@app.route("/api/contacts/<int:contact_id>/timeline", methods=["POST"])
+def add_timeline_entry(contact_id):
+    data = request.json
+    for c in contacts_db:
+        if c["id"] == contact_id:
+            c["timeline"].append({
+                "type": data.get("type", "note"),
+                "date": datetime.now().isoformat(),
+                "note": data.get("note", "")
+            })
+            return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Contact not found"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
