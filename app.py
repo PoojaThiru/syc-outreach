@@ -27,7 +27,7 @@ def search_person(name, company):
     if not SERPER_API_KEY:
         return ""
     try:
-        res = requests.post("https://google.serper.dev/search", 
+        res = requests.post("https://google.serper.dev/search",
             headers={"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"},
             json={"q": f"{name} {company} Japan", "num": 5}
         )
@@ -52,6 +52,9 @@ def scrape_website(url):
         return content[:2000]
     except:
         return ""
+
+def clean_contact(contact):
+    return {k: (v if v is not None else "") for k, v in contact.items()}
 
 CARD_SCAN_PROMPT = """You are scanning a business card image. Extract ALL contact information visible on the card.
 If there are multiple business cards in the image, extract each one separately.
@@ -136,6 +139,8 @@ def add_contact():
     contact["emails"] = {}
     contact["enrichment"] = {}
     contact["web_context"] = {}
+    contact["category"] = "unknown"
+    contact = clean_contact(contact)
     contacts_db.append(contact)
     return jsonify({"success": True, "contact": contact})
 
