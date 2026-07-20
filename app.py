@@ -77,6 +77,26 @@ Return ONLY valid JSON, no markdown:
 
 If a field is not visible on the card, use an empty string. Never guess or invent information."""
 
+PASTE_PROMPT = """You are extracting contact information from unstructured text for Tyson Batino, CEO of Scaling Your Company in Japan.
+
+The input could be anything: an email signature, LinkedIn profile text, a URL, voice transcript, raw notes, or a mix.
+
+Extract whatever contact info you can find. Also extract any useful context notes about who this person is.
+
+Return ONLY valid JSON, no markdown:
+{
+  "name": "...",
+  "title": "...",
+  "company": "...",
+  "email": "...",
+  "phone": "...",
+  "website": "...",
+  "linkedin": "...",
+  "extracted_notes": "any useful context about this person extracted from the text"
+}
+
+Use empty string for any field not found. Never invent information."""
+
 ENRICH_PROMPT = """You are helping build a contact profile for Tyson Batino, CEO of Scaling Your Company (SYC) in Japan.
 
 Based on the contact information and any web context provided, add useful context:
@@ -144,33 +164,68 @@ def add_contact():
     contacts_db.append(contact)
     return jsonify({"success": True, "contact": contact})
 
+@app.route("/api/parse-paste", methods=["POST"])
+def parse_paste():
+    data = request.json
+    raw_text = data.get("raw_text", "")
+
+    if not raw_text:
+        return jsonify({"success": False, "error": "No text provided"})
+
+    scraped_context = ""
+    urls = [word for word in raw_text.split() if word.startswith("http")]
+    if urls:
+        scraped_context = scrape_website(urls[0])
+
+    try:
+        content = raw_text
+        if scraped_context:
+            content += f"\n\nScraped content from URL:\n{scraped_context}"
+
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=800,
+            system=PASTE_PROMPT,
+            messages=[{"role": "user", "content": content}]
+        )
+        text = response.content[0].text
+        clean = text.replace("```json", "").replace("```", "").strip()
+        result = json.loads(clean)
+        return jsonify({"success": True, "contact": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 @app.route("/api/scan-card", methods=["POST"])
 def scan_card():
     data = request.json
     image_data = data.get("image")
     media_type = data.get("media_type", "image/jpeg")
+    qr_url = data.get("qr_url", "")
+
+    qr_context = ""
+    if qr_url:
+        qr_context = scrape_website(qr_url)
 
     try:
+        content = [
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": media_type,
+                    "data": image_data
+                }
+            },
+            {
+                "type": "text",
+                "text": CARD_SCAN_PROMPT + (f"\n\nAdditional context scraped from QR code URL ({qr_url}):\n{qr_context}" if qr_context else "")
+            }
+        ]
+
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1000,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": media_type,
-                            "data": image_data
-                        }
-                    },
-                    {
-                        "type": "text",
-                        "text": CARD_SCAN_PROMPT
-                    }
-                ]
-            }]
+            messages=[{"role": "user", "content": content}]
         )
         text = response.content[0].text
         clean = text.replace("```json", "").replace("```", "").strip()
