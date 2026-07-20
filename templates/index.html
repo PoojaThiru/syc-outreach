@@ -18,7 +18,10 @@
     .header-logo { width: 36px; height: 36px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: #2952cc; }
     .header-title { font-weight: 700; font-size: 16px; color: #fff; }
     .header-sub { font-size: 11px; color: #a8c0ff; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
     .header-count { background: #fff; color: #2952cc; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+    .logout-btn { background: transparent; border: 1px solid #a8c0ff; color: #a8c0ff; font-size: 12px; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-family: inherit; }
+    .logout-btn:hover { background: #1e3fa8; }
 
     .layout { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 64px); }
 
@@ -115,6 +118,10 @@
     .enrichment-box { background: #f0f4ff; border-radius: 8px; padding: 14px; border: 1px solid #dce8ff; }
     .enrichment-text { font-size: 13px; color: #4a5568; line-height: 1.6; }
 
+    .source-link { font-size: 12px; color: #2952cc; text-decoration: none; display: flex; align-items: center; gap: 4px; overflow: hidden; }
+    .source-link:hover { text-decoration: underline; }
+    .source-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
     .timeline { display: flex; flex-direction: column; gap: 10px; }
     .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
     .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: #2952cc; flex-shrink: 0; margin-top: 4px; }
@@ -174,7 +181,10 @@
       <div class="header-sub">Event Outreach System</div>
     </div>
   </div>
-  <div class="header-count" id="contact-count">0 contacts</div>
+  <div class="header-right">
+    <div class="header-count" id="contact-count">0 contacts</div>
+    <button class="logout-btn" onclick="window.location.href='/logout'">Sign Out</button>
+  </div>
 </div>
 
 <div class="layout">
@@ -634,6 +644,7 @@ Examples:
     const emails = contact.emails || {};
     const enrichment = contact.enrichment || {};
     const timeline = contact.timeline || [];
+    const sources = (contact.web_context && contact.web_context.sources) || [];
 
     document.getElementById('contact-detail').innerHTML = `
       <div class="contact-header">
@@ -672,7 +683,17 @@ Examples:
           ${enrichment.recent_news ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">RECENT NEWS</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.recent_news}</div>` : ''}
           ${enrichment.person_background ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">BACKGROUND</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.person_background}</div>` : ''}
           ${enrichment.relevance_to_syc ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">WHY RELEVANT TO SYC</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.relevance_to_syc}</div>` : ''}
-          ${enrichment.talking_points ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">TALKING POINTS</div><div class="enrichment-text">${enrichment.talking_points}</div>` : ''}
+          ${enrichment.talking_points ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">TALKING POINTS</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.talking_points}</div>` : ''}
+          ${sources.length > 0 ? `
+            <div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:6px;margin-top:4px;">SOURCES</div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              ${sources.map(s => `
+                <a href="${s.url}" target="_blank" class="source-link">
+                  <span>🔗</span>
+                  <span>${s.title || s.url}</span>
+                </a>
+              `).join('')}
+            </div>` : ''}
         </div>
       </div>` : `<div class="card"><div class="card-title">AI Context</div><div style="color:#6b7fa8;font-size:13px;" id="enrich-status">Enriching contact...</div></div>`}
 
