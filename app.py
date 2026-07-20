@@ -3,7 +3,7 @@ import json
 import requests
 import anthropic
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -11,10 +11,12 @@ from psycopg2.extras import RealDictCursor
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "syc-secret-2026")
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 SERPER_API_KEY = os.getenv("SERPER_API_KEY")
 FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
+APP_PASSWORD = os.getenv("APP_PASSWORD", "ScalingYourCompany2026")
 
 def get_db():
     conn = psycopg2.connect(DATABASE_URL)
@@ -182,8 +184,29 @@ def row_to_dict(row):
             d[field] = {} if field != 'timeline' else []
     return d
 
+def require_auth():
+    if not session.get("authenticated"):
+        return redirect(url_for("login"))
+    return None
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        if request.json.get("password") == APP_PASSWORD:
+            session["authenticated"] = True
+            return jsonify({"success": True})
+        return jsonify({"success": False, "error": "Incorrect password"})
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
 @app.route("/")
 def index():
+    auth = require_auth()
+    if auth: return auth
     return render_template("index.html")
 
 @app.route("/api/contacts", methods=["GET"])
