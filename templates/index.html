@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SYC Contact Hub</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', system-ui, sans-serif; background: #f0f4ff; color: #1a1a2e; min-height: 100vh; }
@@ -147,16 +148,20 @@
     .hidden { display: none; }
     .error-msg { background: #fff0f0; border: 2px solid #ffb0b0; border-radius: 6px; padding: 12px; color: #c0392b; font-size: 13px; margin-top: 10px; }
     .success-msg { background: #f0fff4; border: 2px solid #9ae6b4; border-radius: 6px; padding: 12px; color: #276749; font-size: 13px; margin-top: 10px; }
+    .info-msg { background: #f0f4ff; border: 2px solid #2952cc; border-radius: 6px; padding: 12px; color: #2952cc; font-size: 13px; margin-top: 10px; }
 
-    .tabs { display: flex; gap: 0; border-bottom: 2px solid #dce8ff; margin-bottom: 20px; }
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid #dce8ff; margin-bottom: 20px; flex-wrap: wrap; }
     .tab-btn {
-      padding: 10px 18px; border: none; cursor: pointer; font-size: 13px; font-weight: 600;
+      padding: 10px 16px; border: none; cursor: pointer; font-size: 13px; font-weight: 600;
       background: transparent; color: #6b7fa8; border-bottom: 3px solid transparent;
       font-family: inherit; transition: all 0.15s; margin-bottom: -2px;
     }
     .tab-btn.active { color: #2952cc; border-bottom-color: #2952cc; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+
+    .qr-detected { background: #f0fff4; border: 2px solid #9ae6b4; border-radius: 8px; padding: 12px; margin-top: 10px; }
+    .qr-url { font-size: 13px; color: #276749; font-weight: 600; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -190,7 +195,7 @@
     <div class="view active" id="view-welcome">
       <div class="card" style="text-align:center; padding: 40px;">
         <div style="font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px;">SYC Contact Hub</div>
-        <div style="font-size: 14px; color: #6b7fa8; margin-bottom: 24px;">Add contacts from business cards, typed notes, or voice recordings. The system organizes everything and drafts follow-up emails automatically.</div>
+        <div style="font-size: 14px; color: #6b7fa8; margin-bottom: 24px;">Add contacts from business cards, typed notes, pasted text, or voice recordings. The system organizes everything and drafts follow-up emails automatically.</div>
         <button class="btn btn-primary" onclick="showView('add')">Add Your First Contact</button>
       </div>
     </div>
@@ -198,7 +203,8 @@
     <!-- ADD CONTACT VIEW -->
     <div class="view" id="view-add">
       <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('scan')">Scan Business Card</button>
+        <button class="tab-btn active" onclick="switchTab('scan')">Scan Card</button>
+        <button class="tab-btn" onclick="switchTab('paste')">Paste Info</button>
         <button class="tab-btn" onclick="switchTab('manual')">Type Manually</button>
       </div>
 
@@ -209,12 +215,12 @@
           <div class="upload-zone" id="upload-zone" onclick="document.getElementById('card-input').click()">
             <div class="upload-zone-icon">📷</div>
             <div class="upload-zone-text">Click to upload a photo</div>
-            <div class="upload-zone-sub">Supports JPG, PNG. Multiple cards in one photo is fine.</div>
+            <div class="upload-zone-sub">Supports JPG, PNG. Multiple cards in one photo is fine. QR codes will be detected automatically.</div>
           </div>
           <input type="file" id="card-input" accept="image/*" class="hidden" onchange="handleCardUpload(event)">
           <div id="card-preview" class="hidden">
             <img id="card-image-preview" style="max-width: 100%; border-radius: 8px; margin-bottom: 12px;">
-            <div id="scan-result" class="hidden"></div>
+            <div id="qr-result"></div>
             <button class="btn btn-primary" id="scan-btn" onclick="scanCard()">Scan Card</button>
           </div>
           <div id="scan-msg"></div>
@@ -239,6 +245,53 @@
               <button class="btn btn-secondary" onclick="resetScan()">Scan Another</button>
             </div>
             <div id="save-msg"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASTE TAB -->
+      <div class="tab-content" id="tab-paste">
+        <div class="card">
+          <div class="card-title">Paste Any Info</div>
+          <div style="font-size: 13px; color: #6b7fa8; margin-bottom: 14px;">
+            Paste anything — an email signature, LinkedIn profile text, a URL, voice transcript, or just raw notes. The AI will extract and organize the contact info automatically.
+          </div>
+          <div class="form-grid">
+            <div class="form-full">
+              <label>Paste info here</label>
+              <textarea id="paste-raw" rows="8" placeholder="Paste anything here...
+
+Examples:
+- John Smith | CEO at FinFlow KK | john@finflow.jp | +81-90-1234-5678
+- https://linkedin.com/in/johnsmith
+- Email signature text
+- Voice note transcript
+- Any combination of the above"></textarea>
+            </div>
+            <div class="form-full">
+              <label>Event where you met</label>
+              <input type="text" id="paste-event" placeholder="Tokyo Founders Summit">
+            </div>
+            <div class="form-full">
+              <label>Additional notes</label>
+              <textarea id="paste-notes" rows="3" placeholder="Anything else you remember about this person..."></textarea>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="parsePastedInfo()">Extract Contact Info</button>
+          </div>
+          <div id="paste-msg"></div>
+        </div>
+
+        <div id="paste-result" class="hidden">
+          <div class="card">
+            <div class="card-title">Extracted Contact</div>
+            <div id="paste-extracted"></div>
+            <div class="btn-row">
+              <button class="btn btn-primary" onclick="savePastedContact()">Save Contact</button>
+              <button class="btn btn-secondary" onclick="resetPaste()">Start Over</button>
+            </div>
+            <div id="paste-save-msg"></div>
           </div>
         </div>
       </div>
@@ -283,6 +336,8 @@
   let scannedCards = [];
   let cardImageBase64 = null;
   let cardMediaType = null;
+  let extractedPasteContact = null;
+  let detectedQRUrl = null;
 
   async function loadContacts() {
     const res = await fetch('/api/contacts');
@@ -329,7 +384,7 @@
 
   function switchTab(name) {
     document.querySelectorAll('.tab-btn').forEach((b, i) => {
-      b.classList.toggle('active', ['scan', 'manual'][i] === name);
+      b.classList.toggle('active', ['scan', 'paste', 'manual'][i] === name);
     });
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
@@ -345,8 +400,35 @@
       cardImageBase64 = dataUrl.split(',')[1];
       document.getElementById('card-image-preview').src = dataUrl;
       document.getElementById('card-preview').classList.remove('hidden');
+      detectQRCode(dataUrl);
     };
     reader.readAsDataURL(file);
+  }
+
+  function detectQRCode(dataUrl) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) {
+        detectedQRUrl = code.data;
+        document.getElementById('qr-result').innerHTML = `
+          <div class="qr-detected">
+            <div style="font-size:11px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">QR CODE DETECTED</div>
+            <div class="qr-url">${code.data}</div>
+            <div style="font-size:12px;color:#276749;margin-top:4px;">This URL will be scraped for additional contact info when you scan.</div>
+          </div>`;
+      } else {
+        detectedQRUrl = null;
+        document.getElementById('qr-result').innerHTML = '';
+      }
+    };
+    img.src = dataUrl;
   }
 
   async function scanCard() {
@@ -359,7 +441,7 @@
       const res = await fetch('/api/scan-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: cardImageBase64, media_type: cardMediaType })
+        body: JSON.stringify({ image: cardImageBase64, media_type: cardMediaType, qr_url: detectedQRUrl })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
@@ -367,7 +449,7 @@
       scannedCards = data.cards;
       renderScannedCards();
       document.getElementById('scanned-contacts').classList.remove('hidden');
-      document.getElementById('scan-msg').innerHTML = `<div class="success-msg">Found ${scannedCards.length} contact${scannedCards.length !== 1 ? 's' : ''}. Add event and notes below then save.</div>`;
+      document.getElementById('scan-msg').innerHTML = `<div class="success-msg">Found ${scannedCards.length} contact${scannedCards.length !== 1 ? 's' : ''}${detectedQRUrl ? ' and scraped QR code URL for extra info' : ''}. Add event and notes below then save.</div>`;
     } catch (e) {
       document.getElementById('scan-msg').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
     }
@@ -383,6 +465,7 @@
         <div style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:4px;">${c.name || 'Unknown'}</div>
         <div style="font-size:12px;color:#6b7fa8;">${[c.title, c.company].filter(Boolean).join(' at ')}</div>
         <div style="font-size:12px;color:#6b7fa8;">${c.email || ''} ${c.phone || ''}</div>
+        ${c.website ? `<div style="font-size:12px;color:#2952cc;">${c.website}</div>` : ''}
       </div>
     `).join('');
   }
@@ -409,11 +492,108 @@
   function resetScan() {
     scannedCards = [];
     cardImageBase64 = null;
+    detectedQRUrl = null;
     document.getElementById('card-input').value = '';
     document.getElementById('card-preview').classList.add('hidden');
     document.getElementById('scanned-contacts').classList.add('hidden');
     document.getElementById('scan-msg').innerHTML = '';
     document.getElementById('save-msg').innerHTML = '';
+    document.getElementById('qr-result').innerHTML = '';
+  }
+
+  async function parsePastedInfo() {
+    const raw = document.getElementById('paste-raw').value.trim();
+    if (!raw) {
+      document.getElementById('paste-msg').innerHTML = '<div class="error-msg">Please paste some info first.</div>';
+      return;
+    }
+
+    const btn = document.querySelector('#tab-paste .btn-primary');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Extracting...';
+    document.getElementById('paste-msg').innerHTML = '<div class="info-msg">Analyzing and extracting contact info...</div>';
+
+    try {
+      const res = await fetch('/api/parse-paste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_text: raw })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      extractedPasteContact = data.contact;
+      renderExtractedContact(data.contact);
+      document.getElementById('paste-result').classList.remove('hidden');
+      document.getElementById('paste-msg').innerHTML = '<div class="success-msg">Contact info extracted. Review below and save.</div>';
+    } catch (e) {
+      document.getElementById('paste-msg').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Extract Contact Info';
+  }
+
+  function renderExtractedContact(contact) {
+    const fields = [
+      { label: 'Name', value: contact.name },
+      { label: 'Title', value: contact.title },
+      { label: 'Company', value: contact.company },
+      { label: 'Email', value: contact.email },
+      { label: 'Phone', value: contact.phone },
+      { label: 'Website', value: contact.website },
+      { label: 'LinkedIn', value: contact.linkedin },
+    ].filter(f => f.value);
+
+    document.getElementById('paste-extracted').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        ${fields.map(f => `
+          <div>
+            <div style="font-size:11px;color:#6b7fa8;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${f.label}</div>
+            <div style="font-size:14px;color:#1a1a2e;">${f.value}</div>
+          </div>
+        `).join('')}
+      </div>
+      ${contact.extracted_notes ? `
+        <div style="margin-top:10px;">
+          <div style="font-size:11px;color:#6b7fa8;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Additional Context Extracted</div>
+          <div style="font-size:13px;color:#4a5568;line-height:1.6;">${contact.extracted_notes}</div>
+        </div>` : ''}
+    `;
+  }
+
+  async function savePastedContact() {
+    if (!extractedPasteContact) return;
+    const event = document.getElementById('paste-event').value;
+    const notes = document.getElementById('paste-notes').value;
+
+    const contact = {
+      ...extractedPasteContact,
+      event,
+      notes: [notes, extractedPasteContact.extracted_notes].filter(Boolean).join('\n'),
+      date_met: new Date().toISOString().split('T')[0]
+    };
+
+    const res = await fetch('/api/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contact })
+    });
+    const data = await res.json();
+    if (data.success) {
+      await loadContacts();
+      document.getElementById('paste-save-msg').innerHTML = '<div class="success-msg">Contact saved!</div>';
+      setTimeout(() => showContact(data.contact.id), 800);
+    }
+  }
+
+  function resetPaste() {
+    extractedPasteContact = null;
+    document.getElementById('paste-raw').value = '';
+    document.getElementById('paste-event').value = '';
+    document.getElementById('paste-notes').value = '';
+    document.getElementById('paste-msg').innerHTML = '';
+    document.getElementById('paste-result').classList.add('hidden');
   }
 
   async function saveManualContact() {
