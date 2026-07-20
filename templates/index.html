@@ -642,9 +642,12 @@ Examples:
           <div class="contact-role">${[contact.title, contact.company].filter(Boolean).join(' at ')}</div>
           ${contact.event ? `<span class="contact-event">${contact.event}</span>` : ''}
         </div>
-        <span class="badge badge-${contact.category || 'unknown'}" style="font-size:12px;padding:5px 14px;">
-          ${(contact.category || 'unclassified').replace(/_/g, ' ')}
-        </span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge badge-${contact.category || 'unknown'}" style="font-size:12px;padding:5px 14px;">
+            ${(contact.category || 'unclassified').replace(/_/g, ' ')}
+          </span>
+          <button onclick="deleteContact(${contact.id})" style="padding:6px 12px;border-radius:6px;border:2px solid #ffb0b0;background:#fff0f0;color:#c0392b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Delete</button>
+        </div>
       </div>
 
       <div class="card">
@@ -779,6 +782,23 @@ Examples:
     document.querySelectorAll('.email-content').forEach(c => c.classList.remove('active'));
     const tab = document.getElementById('etab-' + day);
     if (tab) tab.classList.add('active');
+  }
+
+  async function deleteContact(id) {
+    if (!confirm('Delete this contact? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        allContacts = allContacts.filter(c => c.id !== id);
+        activeContactId = null;
+        renderSidebar(allContacts);
+        showView('welcome');
+        document.getElementById('contact-count').textContent = allContacts.length + ' contact' + (allContacts.length !== 1 ? 's' : '');
+      }
+    } catch (e) {
+      alert('Could not delete contact.');
+    }
   }
 
   loadContacts();
