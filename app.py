@@ -55,7 +55,7 @@ init_db()
 
 def serper_search(query):
     if not SERPER_API_KEY:
-        return ""
+        return {"text": "", "sources": []}
     try:
         res = requests.post("https://google.serper.dev/search",
             headers={"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"},
@@ -63,10 +63,12 @@ def serper_search(query):
             timeout=8
         )
         data = res.json()
-        snippets = [r.get("snippet", "") for r in data.get("organic", [])]
-        return " ".join(snippets[:3])
+        organic = data.get("organic", [])
+        snippets = [r.get("snippet", "") for r in organic[:3]]
+        sources = [{"title": r.get("title", ""), "url": r.get("link", "")} for r in organic[:3] if r.get("link")]
+        return {"text": " ".join(snippets), "sources": sources}
     except:
-        return ""
+        return {"text": "", "sources": []}
 
 def search_person(name, company):
     results = {}
@@ -322,13 +324,20 @@ def enrich_contact():
     website_context = scrape_website(contact.get("website", ""))
     linkedin_context = scrape_website(contact.get("linkedin", ""))
 
+    all_sources = []
+    for key in ["person", "company", "news", "funding"]:
+        r = search_results.get(key, {})
+        if isinstance(r, dict):
+            all_sources.extend(r.get("sources", []))
+
     web_context = {
-        "person_search": search_results.get("person", ""),
-        "company_search": search_results.get("company", ""),
-        "news_search": search_results.get("news", ""),
-        "funding_search": search_results.get("funding", ""),
+        "person_search": search_results.get("person", {}).get("text", "") if isinstance(search_results.get("person"), dict) else "",
+        "company_search": search_results.get("company", {}).get("text", "") if isinstance(search_results.get("company"), dict) else "",
+        "news_search": search_results.get("news", {}).get("text", "") if isinstance(search_results.get("news"), dict) else "",
+        "funding_search": search_results.get("funding", {}).get("text", "") if isinstance(search_results.get("funding"), dict) else "",
         "website_content": website_context,
-        "linkedin_content": linkedin_context
+        "linkedin_content": linkedin_context,
+        "sources": all_sources
     }
 
     try:
