@@ -3,363 +3,608 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SYC Event Outreach</title>
+  <title>SYC Contact Hub</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #f0f4ff;
-      color: #1a1a2e;
-      min-height: 100vh;
-    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f0f4ff; color: #1a1a2e; min-height: 100vh; }
 
     .header {
-      background: #2952cc;
-      padding: 16px 32px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      background: #2952cc; padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between;
     }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo { width: 36px; height: 36px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: #2952cc; }
+    .header-title { font-weight: 700; font-size: 16px; color: #fff; }
+    .header-sub { font-size: 11px; color: #a8c0ff; }
+    .header-count { background: #fff; color: #2952cc; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
 
-    .header-logo {
-      width: 38px; height: 38px;
-      background: #fff;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 15px; color: #2952cc; flex-shrink: 0;
+    .layout { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 64px); }
+
+    .sidebar { background: #fff; border-right: 2px solid #dce8ff; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 16px; border-bottom: 2px solid #dce8ff; }
+    .sidebar-title { font-size: 13px; font-weight: 700; color: #2952cc; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+
+    .search-input {
+      width: 100%; padding: 8px 12px; border-radius: 6px;
+      border: 2px solid #dce8ff; font-size: 13px; font-family: inherit;
+      color: #1a1a2e;
     }
+    .search-input:focus { outline: none; border-color: #2952cc; }
 
-    .header-title { font-weight: 700; font-size: 17px; color: #fff; }
-    .header-sub { font-size: 12px; color: #a8c0ff; }
-
-    .container { max-width: 880px; margin: 0 auto; padding: 32px 24px; }
-
-    .mode-toggle { display: flex; gap: 10px; margin-bottom: 20px; }
-
-    .toggle-btn {
-      padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 600;
-      cursor: pointer; border: 2px solid #2952cc; transition: all 0.15s; font-family: inherit;
+    .contacts-list { flex: 1; overflow-y: auto; }
+    .contact-item {
+      padding: 14px 16px; border-bottom: 1px solid #f0f4ff;
+      cursor: pointer; transition: background 0.1s;
     }
-    .toggle-btn.active { background: #2952cc; color: #fff; }
-    .toggle-btn.inactive { background: #fff; color: #2952cc; }
+    .contact-item:hover { background: #f0f4ff; }
+    .contact-item.active { background: #e8eeff; border-left: 3px solid #2952cc; }
+    .contact-item-name { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
+    .contact-item-sub { font-size: 12px; color: #6b7fa8; margin-bottom: 6px; }
+    .contact-item-meta { display: flex; align-items: center; gap: 6px; }
+    .badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; color: #fff; text-transform: capitalize; }
+    .badge-founder_prospect { background: #2952cc; }
+    .badge-investor { background: #0891b2; }
+    .badge-press_media { background: #7c3aed; }
+    .badge-corporate_partner { background: #0d9488; }
+    .badge-service_provider { background: #64748b; }
+    .badge-community_connector { background: #d97706; }
+    .badge-other { background: #94a3b8; }
+    .badge-unknown { background: #cbd5e1; color: #64748b; }
 
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .empty-state { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 13px; }
 
-    .contact-btn {
-      padding: 12px 16px; border-radius: 8px; cursor: pointer;
-      text-align: left; border: 2px solid #dce8ff;
-      background: #fff; transition: all 0.15s; font-family: inherit;
+    .main { padding: 24px; overflow-y: auto; }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .add-contact-btn {
+      width: 100%; padding: 10px; background: #2952cc; color: #fff;
+      border: none; border-radius: 6px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; margin-top: 10px;
     }
-    .contact-btn:hover { border-color: #2952cc; background: #f0f4ff; }
-    .contact-btn.selected { border-color: #2952cc; background: #e8eeff; }
-    .contact-btn .cn { font-size: 13px; font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
-    .contact-btn .cl { font-size: 11px; color: #6b7fa8; }
+    .add-contact-btn:hover { background: #1e3fa8; }
 
-    .custom-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .custom-form .full { grid-column: 1 / -1; }
+    .card { background: #fff; border-radius: 10px; border: 2px solid #dce8ff; padding: 20px; margin-bottom: 16px; }
+    .card-title { font-size: 14px; font-weight: 700; color: #2952cc; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.04em; }
 
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-full { grid-column: 1 / -1; }
     label { font-size: 11px; color: #6b7fa8; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-
-    input, textarea {
+    input, textarea, select {
       width: 100%; padding: 9px 12px; border-radius: 6px;
       border: 2px solid #dce8ff; background: #fff;
       color: #1a1a2e; font-size: 13px; font-family: inherit;
-      transition: border-color 0.15s;
     }
-    input:focus, textarea:focus { outline: none; border-color: #2952cc; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: #2952cc; }
     textarea { resize: vertical; }
 
-    .preview {
-      background: #fff; border-radius: 10px;
-      padding: 16px 18px; margin-bottom: 20px;
-      border: 2px solid #dce8ff;
+    .upload-zone {
+      border: 2px dashed #2952cc; border-radius: 10px; padding: 30px;
+      text-align: center; cursor: pointer; background: #f0f4ff;
+      transition: all 0.2s; margin-bottom: 12px;
     }
-    .preview-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .preview-name { font-weight: 700; font-size: 15px; color: #1a1a2e; }
-    .preview-role { font-size: 13px; color: #6b7fa8; margin-left: 8px; }
-    .preview-event { font-size: 11px; color: #2952cc; background: #e8eeff; padding: 3px 10px; border-radius: 20px; white-space: nowrap; font-weight: 600; }
-    .preview-notes { font-size: 13px; color: #4a5568; line-height: 1.6; }
+    .upload-zone:hover { background: #e8eeff; }
+    .upload-zone-icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-zone-text { font-size: 14px; font-weight: 600; color: #2952cc; margin-bottom: 4px; }
+    .upload-zone-sub { font-size: 12px; color: #6b7fa8; }
 
-    .run-btn {
-      width: 100%; padding: 13px; border-radius: 8px; border: none;
-      background: #2952cc;
-      color: #fff; font-weight: 700; font-size: 14px;
-      cursor: pointer; margin-bottom: 24px; transition: all 0.2s;
-      font-family: inherit; letter-spacing: 0.02em;
+    .btn {
+      padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
     }
-    .run-btn:hover { background: #1e3fa8; }
-    .run-btn:disabled { background: #b0c0e0; cursor: not-allowed; }
+    .btn-primary { background: #2952cc; color: #fff; }
+    .btn-primary:hover { background: #1e3fa8; }
+    .btn-secondary { background: #fff; color: #2952cc; border: 2px solid #2952cc; }
+    .btn-secondary:hover { background: #f0f4ff; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .error {
-      background: #fff0f0; border: 2px solid #ffb0b0;
-      border-radius: 8px; padding: 14px; color: #c0392b;
-      font-size: 13px; margin-bottom: 16px;
-    }
+    .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 
-    .result-card {
-      background: #fff; border-radius: 10px;
-      padding: 18px; border: 2px solid #dce8ff; margin-bottom: 16px;
-    }
+    .contact-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .contact-name { font-size: 24px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .contact-role { font-size: 14px; color: #6b7fa8; }
+    .contact-event { font-size: 12px; color: #2952cc; background: #e8eeff; padding: 3px 10px; border-radius: 20px; font-weight: 600; display: inline-block; margin-top: 6px; }
 
-    .category-badge {
-      color: #fff; font-size: 12px; font-weight: 700;
-      padding: 4px 12px; border-radius: 20px;
-      display: inline-block; margin-bottom: 12px; letter-spacing: 0.03em;
-    }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info-item label { font-size: 11px; color: #6b7fa8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; display: block; }
+    .info-item p { font-size: 14px; color: #1a1a2e; }
 
-    .angle { font-size: 14px; color: #2952cc; font-style: italic; font-weight: 500; }
+    .enrichment-box { background: #f0f4ff; border-radius: 8px; padding: 14px; border: 1px solid #dce8ff; }
+    .enrichment-text { font-size: 13px; color: #4a5568; line-height: 1.6; }
 
-    .flags {
-      margin-top: 12px; padding: 10px 14px;
-      background: #fffbea; border-radius: 6px;
-      border: 2px solid #f6c90e;
-    }
-    .flags-label { font-size: 11px; font-weight: 700; color: #b8860b; text-transform: uppercase; letter-spacing: 0.05em; }
-    .flags-text { font-size: 12px; color: #7a6000; }
+    .timeline { display: flex; flex-direction: column; gap: 10px; }
+    .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+    .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: #2952cc; flex-shrink: 0; margin-top: 4px; }
+    .timeline-content { flex: 1; }
+    .timeline-date { font-size: 11px; color: #6b7fa8; margin-bottom: 2px; }
+    .timeline-note { font-size: 13px; color: #1a1a2e; }
 
-    .email-tabs { background: #fff; border-radius: 10px; border: 2px solid #dce8ff; overflow: hidden; }
-    .email-tab-nav { display: flex; border-bottom: 2px solid #dce8ff; background: #f0f4ff; }
-
+    .email-tabs { overflow: hidden; border-radius: 8px; border: 2px solid #dce8ff; }
+    .email-tab-nav { display: flex; background: #f0f4ff; border-bottom: 2px solid #dce8ff; }
     .email-tab-btn {
-      flex: 1; padding: 11px; border: none; cursor: pointer;
+      flex: 1; padding: 10px; border: none; cursor: pointer;
       font-size: 13px; font-weight: 600; background: transparent;
       color: #6b7fa8; border-bottom: 3px solid transparent;
       transition: all 0.15s; font-family: inherit;
     }
     .email-tab-btn.active { background: #fff; color: #2952cc; border-bottom-color: #2952cc; }
-
-    .email-content { padding: 18px; display: none; }
+    .email-content { padding: 16px; display: none; background: #fff; }
     .email-content.active { display: block; }
-
-    .email-label { font-size: 11px; color: #6b7fa8; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-    .email-subject { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 16px; }
+    .email-subject { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 12px; }
     .email-body { font-size: 14px; color: #4a5568; line-height: 1.8; white-space: pre-wrap; }
-
-    .hidden { display: none; }
+    .email-label { font-size: 11px; color: #6b7fa8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
 
     .spinner {
       display: inline-block; width: 14px; height: 14px;
-      border: 2px solid #ffffff60; border-top-color: #fff;
+      border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
       border-radius: 50%; animation: spin 0.7s linear infinite;
       margin-right: 8px; vertical-align: middle;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none; }
+    .error-msg { background: #fff0f0; border: 2px solid #ffb0b0; border-radius: 6px; padding: 12px; color: #c0392b; font-size: 13px; margin-top: 10px; }
+    .success-msg { background: #f0fff4; border: 2px solid #9ae6b4; border-radius: 6px; padding: 12px; color: #276749; font-size: 13px; margin-top: 10px; }
+
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid #dce8ff; margin-bottom: 20px; }
+    .tab-btn {
+      padding: 10px 18px; border: none; cursor: pointer; font-size: 13px; font-weight: 600;
+      background: transparent; color: #6b7fa8; border-bottom: 3px solid transparent;
+      font-family: inherit; transition: all 0.15s; margin-bottom: -2px;
+    }
+    .tab-btn.active { color: #2952cc; border-bottom-color: #2952cc; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="header-logo">SYC</div>
-  <div>
-    <div class="header-title">Event Outreach System</div>
-    <div class="header-sub">Phase 1 — Contact Classification + Email Drafting</div>
+  <div class="header-left">
+    <div class="header-logo">SYC</div>
+    <div>
+      <div class="header-title">Contact Hub</div>
+      <div class="header-sub">Event Outreach System</div>
+    </div>
   </div>
+  <div class="header-count" id="contact-count">0 contacts</div>
 </div>
 
-<div class="container">
-
-  <div class="mode-toggle">
-    <button class="toggle-btn active" id="btn-test" onclick="switchMode('test')">Use test contact</button>
-    <button class="toggle-btn inactive" id="btn-custom" onclick="switchMode('custom')">Enter custom contact</button>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">All Contacts</div>
+      <input class="search-input" type="text" placeholder="Search contacts..." id="search-input" oninput="filterContacts()">
+      <button class="add-contact-btn" onclick="showView('add')">+ Add New Contact</button>
+    </div>
+    <div class="contacts-list" id="contacts-list">
+      <div class="empty-state">No contacts yet. Add your first contact to get started.</div>
+    </div>
   </div>
 
-  <div id="test-mode">
-    <div class="contact-grid" id="contact-grid"></div>
+  <div class="main">
 
-    <div class="preview hidden" id="preview">
-      <div class="preview-top">
-        <div>
-          <span class="preview-name" id="p-name"></span>
-          <span class="preview-role" id="p-role"></span>
+    <!-- WELCOME VIEW -->
+    <div class="view active" id="view-welcome">
+      <div class="card" style="text-align:center; padding: 40px;">
+        <div style="font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px;">SYC Contact Hub</div>
+        <div style="font-size: 14px; color: #6b7fa8; margin-bottom: 24px;">Add contacts from business cards, typed notes, or voice recordings. The system organizes everything and drafts follow-up emails automatically.</div>
+        <button class="btn btn-primary" onclick="showView('add')">Add Your First Contact</button>
+      </div>
+    </div>
+
+    <!-- ADD CONTACT VIEW -->
+    <div class="view" id="view-add">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('scan')">Scan Business Card</button>
+        <button class="tab-btn" onclick="switchTab('manual')">Type Manually</button>
+      </div>
+
+      <!-- SCAN TAB -->
+      <div class="tab-content active" id="tab-scan">
+        <div class="card">
+          <div class="card-title">Upload Business Card</div>
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('card-input').click()">
+            <div class="upload-zone-icon">📷</div>
+            <div class="upload-zone-text">Click to upload a photo</div>
+            <div class="upload-zone-sub">Supports JPG, PNG. Multiple cards in one photo is fine.</div>
+          </div>
+          <input type="file" id="card-input" accept="image/*" class="hidden" onchange="handleCardUpload(event)">
+          <div id="card-preview" class="hidden">
+            <img id="card-image-preview" style="max-width: 100%; border-radius: 8px; margin-bottom: 12px;">
+            <div id="scan-result" class="hidden"></div>
+            <button class="btn btn-primary" id="scan-btn" onclick="scanCard()">Scan Card</button>
+          </div>
+          <div id="scan-msg"></div>
         </div>
-        <span class="preview-event" id="p-event"></span>
+
+        <div id="scanned-contacts" class="hidden">
+          <div class="card">
+            <div class="card-title">Scanned Contacts</div>
+            <div id="scanned-list"></div>
+            <div class="form-grid" style="margin-top: 14px;">
+              <div class="form-full">
+                <label>Event where you met</label>
+                <input type="text" id="scan-event" placeholder="Tokyo Founders Summit">
+              </div>
+              <div class="form-full">
+                <label>Notes from the conversation</label>
+                <textarea id="scan-notes" rows="3" placeholder="What did you talk about? What do they do? Why are they interesting?"></textarea>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" onclick="saveScannedContacts()">Save All Contacts</button>
+              <button class="btn btn-secondary" onclick="resetScan()">Scan Another</button>
+            </div>
+            <div id="save-msg"></div>
+          </div>
+        </div>
       </div>
-      <div class="preview-notes" id="p-notes"></div>
+
+      <!-- MANUAL TAB -->
+      <div class="tab-content" id="tab-manual">
+        <div class="card">
+          <div class="card-title">Contact Details</div>
+          <div class="form-grid">
+            <div><label>Name</label><input type="text" id="m-name" placeholder="Sarah Kim"></div>
+            <div><label>Title</label><input type="text" id="m-title" placeholder="CEO"></div>
+            <div><label>Company</label><input type="text" id="m-company" placeholder="FinFlow KK"></div>
+            <div><label>Email</label><input type="text" id="m-email" placeholder="sarah@finflow.jp"></div>
+            <div><label>Phone</label><input type="text" id="m-phone" placeholder="+81-90-..."></div>
+            <div><label>Website</label><input type="text" id="m-website" placeholder="finflow.jp"></div>
+            <div><label>Event where you met</label><input type="text" id="m-event" placeholder="Tokyo Founders Summit"></div>
+            <div><label>Date met</label><input type="date" id="m-date"></div>
+            <div class="form-full">
+              <label>Notes from the conversation</label>
+              <textarea id="m-notes" rows="4" placeholder="What did you talk about? What stood out? Why might they be relevant to SYC?"></textarea>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="saveManualContact()">Save Contact</button>
+          </div>
+          <div id="manual-msg"></div>
+        </div>
+      </div>
     </div>
+
+    <!-- CONTACT DETAIL VIEW -->
+    <div class="view" id="view-contact">
+      <div id="contact-detail"></div>
+    </div>
+
   </div>
-
-  <div id="custom-mode" class="hidden">
-    <div class="custom-form">
-      <div><label>Name</label><input id="c-name" type="text" placeholder="Sarah Kim"></div>
-      <div><label>Title</label><input id="c-title" type="text" placeholder="CEO"></div>
-      <div><label>Company</label><input id="c-company" type="text" placeholder="FinFlow KK"></div>
-      <div><label>Email</label><input id="c-email" type="text" placeholder="sarah@finflow.jp"></div>
-      <div><label>Event</label><input id="c-event" type="text" placeholder="Tokyo Founders Summit"></div>
-      <div><label>Date Met</label><input id="c-date" type="text" placeholder="2025-07-08"></div>
-      <div class="full"><label>Notes</label><textarea id="c-notes" rows="4" placeholder="What did you talk about? What do they do? Why are they interesting?"></textarea></div>
-    </div>
-  </div>
-
-  <button class="run-btn" id="run-btn" onclick="runClassification()" disabled>
-    Run Classification
-  </button>
-
-  <div class="error hidden" id="error"></div>
-
-  <div id="result" class="hidden">
-    <div class="result-card">
-      <span class="category-badge" id="r-category"></span>
-      <div class="angle" id="r-angle"></div>
-      <div class="flags hidden" id="r-flags">
-        <span class="flags-label">Flags: </span>
-        <span class="flags-text" id="r-flags-text"></span>
-      </div>
-    </div>
-
-    <div class="email-tabs">
-      <div class="email-tab-nav">
-        <button class="email-tab-btn active" onclick="switchEmail('day1')">Day 1 Reconnect</button>
-        <button class="email-tab-btn" onclick="switchEmail('day7')">Day 7 Value Add</button>
-        <button class="email-tab-btn" onclick="switchEmail('day21')">Day 21 Check In</button>
-      </div>
-      <div class="email-content active" id="tab-day1">
-        <div class="email-label">Subject</div>
-        <div class="email-subject" id="d1-subject"></div>
-        <div class="email-label">Body</div>
-        <div class="email-body" id="d1-body"></div>
-      </div>
-      <div class="email-content" id="tab-day7">
-        <div class="email-label">Subject</div>
-        <div class="email-subject" id="d7-subject"></div>
-        <div class="email-label">Body</div>
-        <div class="email-body" id="d7-body"></div>
-      </div>
-      <div class="email-content" id="tab-day21">
-        <div class="email-label">Subject</div>
-        <div class="email-subject" id="d21-subject"></div>
-        <div class="email-label">Body</div>
-        <div class="email-body" id="d21-body"></div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
-  const contacts = {{ contacts | tojson }};
-  let selectedContact = null;
-  let currentMode = 'test';
+  let allContacts = [];
+  let activeContactId = null;
+  let scannedCards = [];
+  let cardImageBase64 = null;
+  let cardMediaType = null;
 
-  contacts.forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'contact-btn';
-    btn.id = 'contact-' + c.id;
-    btn.innerHTML = `<div class="cn">${c.name}</div><div class="cl">${c.label}</div>`;
-    btn.addEventListener('click', () => selectContact(c));
-    document.getElementById('contact-grid').appendChild(btn);
-  });
-
-  const categoryColors = {
-    founder_prospect: '#2952cc',
-    investor: '#0891b2',
-    press_media: '#7c3aed',
-    corporate_partner: '#0d9488',
-    service_provider: '#64748b',
-    community_connector: '#d97706',
-    other: '#94a3b8'
-  };
-
-  function switchMode(mode) {
-    currentMode = mode;
-    document.getElementById('test-mode').classList.toggle('hidden', mode !== 'test');
-    document.getElementById('custom-mode').classList.toggle('hidden', mode !== 'custom');
-    document.getElementById('btn-test').className = 'toggle-btn ' + (mode === 'test' ? 'active' : 'inactive');
-    document.getElementById('btn-custom').className = 'toggle-btn ' + (mode === 'custom' ? 'active' : 'inactive');
-    document.getElementById('run-btn').disabled = mode === 'test' && !selectedContact;
-    if (mode === 'custom') document.getElementById('run-btn').disabled = false;
-    document.getElementById('result').classList.add('hidden');
-    document.getElementById('error').classList.add('hidden');
+  async function loadContacts() {
+    const res = await fetch('/api/contacts');
+    const data = await res.json();
+    allContacts = data.contacts || [];
+    renderSidebar(allContacts);
+    document.getElementById('contact-count').textContent = allContacts.length + ' contact' + (allContacts.length !== 1 ? 's' : '');
   }
 
-  function selectContact(contact) {
-    selectedContact = contact;
-    document.querySelectorAll('.contact-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('contact-' + contact.id).classList.add('selected');
-    document.getElementById('p-name').textContent = contact.name;
-    document.getElementById('p-role').textContent = [contact.title, contact.company].filter(Boolean).join(' · ');
-    document.getElementById('p-event').textContent = contact.event;
-    document.getElementById('p-notes').textContent = contact.notes;
-    document.getElementById('preview').classList.remove('hidden');
-    document.getElementById('run-btn').disabled = false;
-    document.getElementById('result').classList.add('hidden');
-    document.getElementById('error').classList.add('hidden');
-  }
-
-  function switchEmail(day) {
-    document.querySelectorAll('.email-tab-btn').forEach((b, i) => {
-      b.classList.toggle('active', ['day1','day7','day21'][i] === day);
-    });
-    document.querySelectorAll('.email-content').forEach(c => c.classList.remove('active'));
-    document.getElementById('tab-' + day).classList.add('active');
-  }
-
-  async function runClassification() {
-    const btn = document.getElementById('run-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Classifying and drafting emails...';
-    document.getElementById('result').classList.add('hidden');
-    document.getElementById('error').classList.add('hidden');
-
-    let contact;
-    if (currentMode === 'test') {
-      contact = selectedContact;
-    } else {
-      contact = {
-        name: document.getElementById('c-name').value,
-        title: document.getElementById('c-title').value,
-        company: document.getElementById('c-company').value,
-        email: document.getElementById('c-email').value,
-        event: document.getElementById('c-event').value,
-        met_date: document.getElementById('c-date').value,
-        notes: document.getElementById('c-notes').value,
-      };
+  function renderSidebar(contacts) {
+    const list = document.getElementById('contacts-list');
+    if (contacts.length === 0) {
+      list.innerHTML = '<div class="empty-state">No contacts yet. Add your first contact to get started.</div>';
+      return;
     }
+    list.innerHTML = contacts.map(c => `
+      <div class="contact-item ${c.id === activeContactId ? 'active' : ''}" onclick="showContact(${c.id})">
+        <div class="contact-item-name">${c.name || 'Unknown'}</div>
+        <div class="contact-item-sub">${[c.title, c.company].filter(Boolean).join(' at ') || 'No details yet'}</div>
+        <div class="contact-item-meta">
+          <span class="badge badge-${c.category || 'unknown'}">${(c.category || 'unclassified').replace(/_/g, ' ')}</span>
+          ${c.event ? `<span style="font-size:11px;color:#6b7fa8">${c.event}</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterContacts() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const filtered = allContacts.filter(c =>
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.company || '').toLowerCase().includes(q) ||
+      (c.event || '').toLowerCase().includes(q)
+    );
+    renderSidebar(filtered);
+  }
+
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    if (name !== 'contact') activeContactId = null;
+    renderSidebar(allContacts);
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', ['scan', 'manual'][i] === name);
+    });
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  function handleCardUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    cardMediaType = file.type || 'image/jpeg';
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const dataUrl = ev.target.result;
+      cardImageBase64 = dataUrl.split(',')[1];
+      document.getElementById('card-image-preview').src = dataUrl;
+      document.getElementById('card-preview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function scanCard() {
+    const btn = document.getElementById('scan-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Scanning...';
+    document.getElementById('scan-msg').innerHTML = '';
 
     try {
-      const res = await fetch('/classify', {
+      const res = await fetch('/api/scan-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: cardImageBase64, media_type: cardMediaType })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      scannedCards = data.cards;
+      renderScannedCards();
+      document.getElementById('scanned-contacts').classList.remove('hidden');
+      document.getElementById('scan-msg').innerHTML = `<div class="success-msg">Found ${scannedCards.length} contact${scannedCards.length !== 1 ? 's' : ''}. Add event and notes below then save.</div>`;
+    } catch (e) {
+      document.getElementById('scan-msg').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Scan Card';
+  }
+
+  function renderScannedCards() {
+    const list = document.getElementById('scanned-list');
+    list.innerHTML = scannedCards.map((c, i) => `
+      <div style="background:#f0f4ff;border-radius:8px;padding:12px;border:1px solid #dce8ff;margin-bottom:10px;">
+        <div style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:4px;">${c.name || 'Unknown'}</div>
+        <div style="font-size:12px;color:#6b7fa8;">${[c.title, c.company].filter(Boolean).join(' at ')}</div>
+        <div style="font-size:12px;color:#6b7fa8;">${c.email || ''} ${c.phone || ''}</div>
+      </div>
+    `).join('');
+  }
+
+  async function saveScannedContacts() {
+    const event = document.getElementById('scan-event').value;
+    const notes = document.getElementById('scan-notes').value;
+    const msg = document.getElementById('save-msg');
+    msg.innerHTML = '<div class="success-msg">Saving...</div>';
+
+    for (const card of scannedCards) {
+      await fetch('/api/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: { ...card, event, notes, date_met: new Date().toISOString().split('T')[0] } })
+      });
+    }
+
+    await loadContacts();
+    msg.innerHTML = `<div class="success-msg">Saved ${scannedCards.length} contact${scannedCards.length !== 1 ? 's' : ''} successfully.</div>`;
+    setTimeout(() => { resetScan(); showView('welcome'); }, 1500);
+  }
+
+  function resetScan() {
+    scannedCards = [];
+    cardImageBase64 = null;
+    document.getElementById('card-input').value = '';
+    document.getElementById('card-preview').classList.add('hidden');
+    document.getElementById('scanned-contacts').classList.add('hidden');
+    document.getElementById('scan-msg').innerHTML = '';
+    document.getElementById('save-msg').innerHTML = '';
+  }
+
+  async function saveManualContact() {
+    const contact = {
+      name: document.getElementById('m-name').value,
+      title: document.getElementById('m-title').value,
+      company: document.getElementById('m-company').value,
+      email: document.getElementById('m-email').value,
+      phone: document.getElementById('m-phone').value,
+      website: document.getElementById('m-website').value,
+      event: document.getElementById('m-event').value,
+      date_met: document.getElementById('m-date').value,
+      notes: document.getElementById('m-notes').value,
+    };
+
+    const res = await fetch('/api/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contact })
+    });
+    const data = await res.json();
+    if (data.success) {
+      await loadContacts();
+      document.getElementById('manual-msg').innerHTML = '<div class="success-msg">Contact saved!</div>';
+      setTimeout(() => showContact(data.contact.id), 800);
+    }
+  }
+
+  async function showContact(id) {
+    activeContactId = id;
+    renderSidebar(allContacts);
+    const contact = allContacts.find(c => c.id === id);
+    if (!contact) return;
+
+    showView('contact');
+    renderContactDetail(contact);
+
+    if (!contact.enrichment || !contact.enrichment.category) {
+      enrichContact(id);
+    }
+  }
+
+  function renderContactDetail(contact) {
+    const emails = contact.emails || {};
+    const enrichment = contact.enrichment || {};
+    const timeline = contact.timeline || [];
+
+    document.getElementById('contact-detail').innerHTML = `
+      <div class="contact-header">
+        <div>
+          <div class="contact-name">${contact.name || 'Unknown'}</div>
+          <div class="contact-role">${[contact.title, contact.company].filter(Boolean).join(' at ')}</div>
+          ${contact.event ? `<span class="contact-event">${contact.event}</span>` : ''}
+        </div>
+        <span class="badge badge-${contact.category || 'unknown'}" style="font-size:12px;padding:5px 14px;">
+          ${(contact.category || 'unclassified').replace(/_/g, ' ')}
+        </span>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Contact Info</div>
+        <div class="info-grid">
+          <div class="info-item"><label>Email</label><p>${contact.email || 'Not provided'}</p></div>
+          <div class="info-item"><label>Phone</label><p>${contact.phone || 'Not provided'}</p></div>
+          <div class="info-item"><label>Company</label><p>${contact.company || 'Not provided'}</p></div>
+          <div class="info-item"><label>Website</label><p>${contact.website || 'Not provided'}</p></div>
+          <div class="info-item"><label>Date Met</label><p>${contact.date_met || 'Not recorded'}</p></div>
+          <div class="info-item"><label>Added</label><p>${new Date(contact.created_at).toLocaleDateString()}</p></div>
+        </div>
+        ${contact.notes ? `<div style="margin-top:14px;"><label>Notes</label><div style="font-size:14px;color:#4a5568;line-height:1.6;margin-top:4px;">${contact.notes}</div></div>` : ''}
+      </div>
+
+      ${enrichment.company_description ? `
+      <div class="card">
+        <div class="card-title">AI Context</div>
+        <div class="enrichment-box">
+          <div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">COMPANY</div>
+          <div class="enrichment-text" style="margin-bottom:10px;">${enrichment.company_description}</div>
+          ${enrichment.enrichment_notes ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">NOTES</div><div class="enrichment-text">${enrichment.enrichment_notes}</div>` : ''}
+        </div>
+      </div>` : `<div class="card"><div class="card-title">AI Context</div><div style="color:#6b7fa8;font-size:13px;" id="enrich-status">Enriching contact...</div></div>`}
+
+      <div class="card">
+        <div class="card-title">Email Drafts</div>
+        ${emails.day1 ? `
+        <div style="margin-bottom:12px;padding:8px 12px;background:#f0fff4;border-radius:6px;border:1px solid #9ae6b4;">
+          <div style="font-size:12px;color:#276749;font-weight:600;">${emails.follow_up_angle || ''}</div>
+        </div>
+        <div class="email-tabs">
+          <div class="email-tab-nav">
+            <button class="email-tab-btn active" onclick="switchEmailTab('day1')">Day 1 Reconnect</button>
+            <button class="email-tab-btn" onclick="switchEmailTab('day7')">Day 7 Value Add</button>
+            <button class="email-tab-btn" onclick="switchEmailTab('day21')">Day 21 Check In</button>
+          </div>
+          <div class="email-content active" id="etab-day1">
+            <div class="email-label">Subject</div>
+            <div class="email-subject">${emails.day1.subject}</div>
+            <div class="email-label">Body</div>
+            <div class="email-body">${emails.day1.body}</div>
+          </div>
+          <div class="email-content" id="etab-day7">
+            <div class="email-label">Subject</div>
+            <div class="email-subject">${emails.day7.subject}</div>
+            <div class="email-label">Body</div>
+            <div class="email-body">${emails.day7.body}</div>
+          </div>
+          <div class="email-content" id="etab-day21">
+            <div class="email-label">Subject</div>
+            <div class="email-subject">${emails.day21.subject}</div>
+            <div class="email-label">Body</div>
+            <div class="email-body">${emails.day21.body}</div>
+          </div>
+        </div>` : `
+        <div style="color:#6b7fa8;font-size:13px;margin-bottom:14px;">No email drafts generated yet.</div>
+        <button class="btn btn-primary" onclick="generateEmails(${contact.id})" id="gen-email-btn">Generate Email Drafts</button>
+        <div id="email-gen-msg"></div>`}
+      </div>
+
+      <div class="card">
+        <div class="card-title">Timeline</div>
+        ${timeline.length > 0 ? `
+        <div class="timeline">
+          ${timeline.map(t => `
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">${new Date(t.date).toLocaleDateString()}</div>
+                <div class="timeline-note">${t.note}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>` : `<div style="color:#6b7fa8;font-size:13px;">No activity logged yet.</div>`}
+      </div>
+    `;
+  }
+
+  async function enrichContact(id) {
+    const contact = allContacts.find(c => c.id === id);
+    if (!contact) return;
+
+    try {
+      const res = await fetch('/api/enrich', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contact })
       });
       const data = await res.json();
-
-      if (!data.success) throw new Error(data.error);
-
-      const r = data.result;
-      const cat = r.category?.replace(/_/g, ' ');
-      const badge = document.getElementById('r-category');
-      badge.textContent = cat;
-      badge.style.background = categoryColors[r.category] || '#94a3b8';
-
-      document.getElementById('r-angle').textContent = '"' + r.follow_up_angle + '"';
-
-      if (r.flags) {
-        document.getElementById('r-flags').classList.remove('hidden');
-        document.getElementById('r-flags-text').textContent = r.flags;
-      } else {
-        document.getElementById('r-flags').classList.add('hidden');
+      if (data.success) {
+        contact.enrichment = data.enrichment;
+        contact.category = data.enrichment.category || contact.category;
+        renderContactDetail(contact);
+        renderSidebar(allContacts);
       }
-
-      document.getElementById('d1-subject').textContent = r.day1.subject;
-      document.getElementById('d1-body').textContent = r.day1.body;
-      document.getElementById('d7-subject').textContent = r.day7.subject;
-      document.getElementById('d7-body').textContent = r.day7.body;
-      document.getElementById('d21-subject').textContent = r.day21.subject;
-      document.getElementById('d21-body').textContent = r.day21.body;
-
-      switchEmail('day1');
-      document.getElementById('result').classList.remove('hidden');
-
     } catch (e) {
-      document.getElementById('error').textContent = 'Something went wrong: ' + e.message;
-      document.getElementById('error').classList.remove('hidden');
+      const status = document.getElementById('enrich-status');
+      if (status) status.textContent = 'Could not enrich contact.';
     }
-
-    btn.disabled = false;
-    btn.innerHTML = 'Run Classification';
   }
+
+  async function generateEmails(id) {
+    const btn = document.getElementById('gen-email-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generating...'; }
+
+    try {
+      const res = await fetch(`/api/generate-emails/${id}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        const contact = allContacts.find(c => c.id === id);
+        if (contact) {
+          contact.emails = data.result;
+          contact.timeline = contact.timeline || [];
+          contact.timeline.push({ type: 'emails_generated', date: new Date().toISOString(), note: 'Email drafts generated' });
+          renderContactDetail(contact);
+        }
+      }
+    } catch (e) {
+      const msg = document.getElementById('email-gen-msg');
+      if (msg) msg.innerHTML = '<div class="error-msg">Error generating emails.</div>';
+    }
+  }
+
+  function switchEmailTab(day) {
+    document.querySelectorAll('.email-tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', ['day1','day7','day21'][i] === day);
+    });
+    document.querySelectorAll('.email-content').forEach(c => c.classList.remove('active'));
+    const tab = document.getElementById('etab-' + day);
+    if (tab) tab.classList.add('active');
+  }
+
+  loadContacts();
 </script>
 </body>
 </html>
