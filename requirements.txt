@@ -3,3 +3,4 @@ anthropic
 python-dotenv
 gunicorn
 requests
+psycopg2-binary
