@@ -23,19 +23,28 @@ def get_next_id():
     contact_id_counter += 1
     return cid
 
-def search_person(name, company):
+def serper_search(query):
     if not SERPER_API_KEY:
         return ""
     try:
         res = requests.post("https://google.serper.dev/search",
             headers={"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"},
-            json={"q": f"{name} {company} Japan", "num": 5}
+            json={"q": query, "num": 5},
+            timeout=8
         )
         data = res.json()
         snippets = [r.get("snippet", "") for r in data.get("organic", [])]
         return " ".join(snippets[:3])
     except:
         return ""
+
+def search_person(name, company):
+    results = {}
+    results["person"] = serper_search(f"{name} {company}")
+    results["company"] = serper_search(f"{company} Japan startup")
+    results["news"] = serper_search(f'"{name}" OR "{company}" news 2024 2025')
+    results["funding"] = serper_search(f"{company} funding investors crunchbase")
+    return results
 
 def scrape_website(url):
     if not FIRECRAWL_API_KEY or not url:
@@ -45,7 +54,8 @@ def scrape_website(url):
             url = "https://" + url
         res = requests.post("https://api.firecrawl.dev/v0/scrape",
             headers={"Authorization": f"Bearer {FIRECRAWL_API_KEY}", "Content-Type": "application/json"},
-            json={"url": url, "pageOptions": {"onlyMainContent": True}}
+            json={"url": url, "pageOptions": {"onlyMainContent": True}},
+            timeout=15
         )
         data = res.json()
         content = data.get("data", {}).get("markdown", "")
@@ -53,8 +63,19 @@ def scrape_website(url):
     except:
         return ""
 
+def scrape_linkedin(linkedin_url):
+    if not linkedin_url:
+        return ""
+    return scrape_website(linkedin_url)
+
 def clean_contact(contact):
-    return {k: (v if v is not None else "") for k, v in contact.items()}
+    cleaned = {}
+    for k, v in contact.items():
+        if isinstance(v, (dict, list)):
+            cleaned[k] = v
+        else:
+            cleaned[k] = v if v is not None else ""
+    return cleaned
 
 CARD_SCAN_PROMPT = """You are scanning a business card image. Extract ALL contact information visible on the card.
 If there are multiple business cards in the image, extract each one separately.
@@ -97,35 +118,45 @@ Return ONLY valid JSON, no markdown:
 
 Use empty string for any field not found. Never invent information."""
 
-ENRICH_PROMPT = """You are helping build a contact profile for Tyson Batino, CEO of Scaling Your Company (SYC) in Japan.
+ENRICH_PROMPT = """You are building a detailed contact intelligence profile for Tyson Batino, CEO of Scaling Your Company (SYC) in Japan.
 
-Based on the contact information and any web context provided, add useful context:
-- What their company does
-- The industry they operate in
-- Company size or stage if known
-- Any relevant background about the person
-- Why they might be relevant to a business coaching/scaling company in Japan
+You have been given contact information plus multiple sources of web research about this person. Your job is to synthesize all of this into a rich, useful profile.
 
-Be honest about what you know vs what you are inferring. Keep it brief and practical.
+Based on everything provided, extract and summarize:
+1. What their company does and who their customers are
+2. The industry and market they operate in
+3. Company stage, size, and funding history if known
+4. Recent news or developments about them or their company
+5. The person's background and career history
+6. Why they are relevant to SYC — a business coaching and scaling company in Japan
+7. Specific talking points Tyson could reference in a follow-up
+
+Be specific. Use real details from the research. If you found funding info, name the amount and investors. If there is recent news, mention it. Do not be generic.
 
 Return ONLY valid JSON, no markdown:
 {
-  "company_description": "...",
-  "industry": "...",
-  "enrichment_notes": "...",
+  "company_description": "what the company does, who their customers are, their market",
+  "industry": "specific industry",
+  "stage_and_size": "funding stage, team size, revenue stage if known",
+  "recent_news": "any recent news, launches, funding rounds, press in 2024-2025",
+  "person_background": "career history, expertise, notable background",
+  "relevance_to_syc": "why this person matters to Tyson and SYC specifically",
+  "talking_points": "2-3 specific things Tyson could reference in a follow-up email",
+  "enrichment_notes": "anything else useful",
   "category": "founder_prospect|investor|press_media|corporate_partner|service_provider|community_connector|other",
-  "category_reason": "..."
+  "category_reason": "why this category"
 }"""
 
 CLASSIFY_PROMPT = """You are an AI assistant for Tyson Batino, CEO of Scaling Your Company (SYC) and SmartStart Japan.
 
-Read the contact record including any web context and enrichment data, then write follow-up email drafts.
+Read the contact record including all web research and enrichment data, then write highly personalised follow-up email drafts.
 
 Use Tyson's voice:
 - Direct and warm. No corporate fluff.
-- Reference real specifics from notes and web context
+- Reference REAL specifics from the research — company name, what they do, recent news, funding, specific details
 - Short sentences. Active voice. Max 6 lines per email.
 - Signs off as Tyson
+- The Day 7 email should reference something specific from their website or recent news
 
 EXAMPLES OF TYSON'S VOICE:
 "Hey Sarah, Really enjoyed our chat yesterday. The payments infrastructure problem you're solving for SMEs is one I see a lot of founders underestimate until it becomes a bottleneck at 20+ people. Would love to stay in touch. Tyson"
@@ -134,7 +165,7 @@ EXAMPLES OF TYSON'S VOICE:
 
 Return ONLY valid JSON:
 {
-  "follow_up_angle": "one sentence specific hook for this person",
+  "follow_up_angle": "one sentence specific hook for this person using real details",
   "flags": "any issues or gaps noticed, or empty string",
   "day1": { "subject": "...", "body": "..." },
   "day7": { "subject": "...", "body": "..." },
@@ -239,23 +270,28 @@ def enrich_contact():
     data = request.json
     contact = data.get("contact", {})
 
-    search_context = search_person(contact.get("name", ""), contact.get("company", ""))
+    search_results = search_person(contact.get("name", ""), contact.get("company", ""))
     website_context = scrape_website(contact.get("website", ""))
+    linkedin_context = scrape_linkedin(contact.get("linkedin", ""))
 
     web_context = {
-        "search_results": search_context,
-        "website_content": website_context
+        "person_search": search_results.get("person", ""),
+        "company_search": search_results.get("company", ""),
+        "news_search": search_results.get("news", ""),
+        "funding_search": search_results.get("funding", ""),
+        "website_content": website_context,
+        "linkedin_content": linkedin_context
     }
 
     try:
-        enrich_input = {**contact, "web_context": web_context}
+        enrich_input = {**contact, "web_research": web_context}
         response = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=800,
+            max_tokens=1200,
             system=ENRICH_PROMPT,
             messages=[{
                 "role": "user",
-                "content": f"Contact: {json.dumps(enrich_input, indent=2)}"
+                "content": f"Contact and research:\n{json.dumps(enrich_input, indent=2)}"
             }]
         )
         text = response.content[0].text
