@@ -191,7 +191,6 @@
 
   <div class="main">
 
-    <!-- WELCOME VIEW -->
     <div class="view active" id="view-welcome">
       <div class="card" style="text-align:center; padding: 40px;">
         <div style="font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px;">SYC Contact Hub</div>
@@ -200,7 +199,6 @@
       </div>
     </div>
 
-    <!-- ADD CONTACT VIEW -->
     <div class="view" id="view-add">
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('scan')">Scan Card</button>
@@ -208,7 +206,6 @@
         <button class="tab-btn" onclick="switchTab('manual')">Type Manually</button>
       </div>
 
-      <!-- SCAN TAB -->
       <div class="tab-content active" id="tab-scan">
         <div class="card">
           <div class="card-title">Upload Business Card</div>
@@ -249,7 +246,6 @@
         </div>
       </div>
 
-      <!-- PASTE TAB -->
       <div class="tab-content" id="tab-paste">
         <div class="card">
           <div class="card-title">Paste Any Info</div>
@@ -296,7 +292,6 @@ Examples:
         </div>
       </div>
 
-      <!-- MANUAL TAB -->
       <div class="tab-content" id="tab-manual">
         <div class="card">
           <div class="card-title">Contact Details</div>
@@ -322,7 +317,6 @@ Examples:
       </div>
     </div>
 
-    <!-- CONTACT DETAIL VIEW -->
     <div class="view" id="view-contact">
       <div id="contact-detail"></div>
     </div>
@@ -670,9 +664,12 @@ Examples:
       <div class="card">
         <div class="card-title">AI Context</div>
         <div class="enrichment-box">
-          <div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">COMPANY</div>
-          <div class="enrichment-text" style="margin-bottom:10px;">${enrichment.company_description}</div>
-          ${enrichment.enrichment_notes ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">NOTES</div><div class="enrichment-text">${enrichment.enrichment_notes}</div>` : ''}
+          ${enrichment.company_description ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">COMPANY</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.company_description}</div>` : ''}
+          ${enrichment.stage_and_size ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">STAGE AND SIZE</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.stage_and_size}</div>` : ''}
+          ${enrichment.recent_news ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">RECENT NEWS</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.recent_news}</div>` : ''}
+          ${enrichment.person_background ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">BACKGROUND</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.person_background}</div>` : ''}
+          ${enrichment.relevance_to_syc ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">WHY RELEVANT TO SYC</div><div class="enrichment-text" style="margin-bottom:12px;">${enrichment.relevance_to_syc}</div>` : ''}
+          ${enrichment.talking_points ? `<div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:4px;">TALKING POINTS</div><div class="enrichment-text">${enrichment.talking_points}</div>` : ''}
         </div>
       </div>` : `<div class="card"><div class="card-title">AI Context</div><div style="color:#6b7fa8;font-size:13px;" id="enrich-status">Enriching contact...</div></div>`}
 
