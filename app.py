@@ -40,12 +40,16 @@ def init_db():
             date_met TEXT,
             notes TEXT,
             category TEXT DEFAULT 'unknown',
+            status TEXT DEFAULT 'new',
             enrichment JSONB DEFAULT '{}',
             web_context JSONB DEFAULT '{}',
             emails JSONB DEFAULT '{}',
             timeline JSONB DEFAULT '[]',
             created_at TIMESTAMP DEFAULT NOW()
         )
+    """)
+    cur.execute("""
+        ALTER TABLE contacts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'new'
     """)
     conn.commit()
     cur.close()
@@ -232,14 +236,14 @@ def add_contact():
         conn = get_db()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
-            INSERT INTO contacts (name, title, company, email, phone, website, linkedin, address, event, date_met, notes, category)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO contacts (name, title, company, email, phone, website, linkedin, address, event, date_met, notes, category, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
         """, (
             c.get("name", ""), c.get("title", ""), c.get("company", ""),
             c.get("email", ""), c.get("phone", ""), c.get("website", ""),
             c.get("linkedin", ""), c.get("address", ""), c.get("event", ""),
-            c.get("date_met", ""), c.get("notes", ""), "unknown"
+            c.get("date_met", ""), c.get("notes", ""), "unknown", "new"
         ))
         row = cur.fetchone()
         conn.commit()
@@ -255,6 +259,49 @@ def delete_contact(contact_id):
         conn = get_db()
         cur = conn.cursor()
         cur.execute("DELETE FROM contacts WHERE id = %s", (contact_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route("/api/contacts/<int:contact_id>/status", methods=["POST"])
+def update_status(contact_id):
+    data = request.json
+    status = data.get("status", "")
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT timeline FROM contacts WHERE id = %s", (contact_id,))
+        row = cur.fetchone()
+        if not row:
+            return jsonify({"success": False, "error": "Contact not found"})
+        timeline = row["timeline"] or []
+        timeline.append({"type": "status_change", "date": datetime.now().isoformat(), "note": f"Status updated to {status}"})
+        cur.execute("UPDATE contacts SET status = %s, timeline = %s WHERE id = %s",
+            (status, json.dumps(timeline), contact_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route("/api/contacts/<int:contact_id>/mark-sent", methods=["POST"])
+def mark_sent(contact_id):
+    data = request.json
+    email_day = data.get("email_day", "day1")
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT timeline FROM contacts WHERE id = %s", (contact_id,))
+        row = cur.fetchone()
+        if not row:
+            return jsonify({"success": False, "error": "Contact not found"})
+        timeline = row["timeline"] or []
+        timeline.append({"type": "email_sent", "date": datetime.now().isoformat(), "note": f"{email_day.replace('day', 'Day ')} email marked as sent"})
+        cur.execute("UPDATE contacts SET timeline = %s WHERE id = %s", (json.dumps(timeline), contact_id))
         conn.commit()
         cur.close()
         conn.close()
