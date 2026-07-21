@@ -45,7 +45,7 @@
     .contact-item.active { background: #e8eeff; border-left: 3px solid #2952cc; }
     .contact-item-name { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
     .contact-item-sub { font-size: 12px; color: #6b7fa8; margin-bottom: 6px; }
-    .contact-item-meta { display: flex; align-items: center; gap: 6px; }
+    .contact-item-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; color: #fff; text-transform: capitalize; }
     .badge-founder_prospect { background: #2952cc; }
     .badge-investor { background: #0891b2; }
@@ -55,6 +55,13 @@
     .badge-community_connector { background: #d97706; }
     .badge-other { background: #94a3b8; }
     .badge-unknown { background: #cbd5e1; color: #64748b; }
+
+    .status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: capitalize; }
+    .status-new { background: #e8eeff; color: #2952cc; }
+    .status-contacted { background: #fef3c7; color: #d97706; }
+    .status-replied { background: #d1fae5; color: #065f46; }
+    .status-client { background: #2952cc; color: #fff; }
+    .status-not_interested { background: #fee2e2; color: #991b1b; }
 
     .empty-state { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 13px; }
 
@@ -118,7 +125,7 @@
     .enrichment-box { background: #f0f4ff; border-radius: 8px; padding: 14px; border: 1px solid #dce8ff; }
     .enrichment-text { font-size: 13px; color: #4a5568; line-height: 1.6; }
 
-    .source-link { font-size: 12px; color: #2952cc; text-decoration: none; display: flex; align-items: center; gap: 4px; overflow: hidden; }
+    .source-link { font-size: 12px; color: #2952cc; text-decoration: none; display: flex; align-items: center; gap: 4px; }
     .source-link:hover { text-decoration: underline; }
     .source-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -363,7 +370,7 @@ Examples:
         <div class="contact-item-sub">${[c.title, c.company].filter(Boolean).join(' at ') || 'No details yet'}</div>
         <div class="contact-item-meta">
           <span class="badge badge-${c.category || 'unknown'}">${(c.category || 'unclassified').replace(/_/g, ' ')}</span>
-          ${c.event ? `<span style="font-size:11px;color:#6b7fa8">${c.event}</span>` : ''}
+          <span class="status-badge status-${c.status || 'new'}">${(c.status || 'new').replace(/_/g, ' ')}</span>
         </div>
       </div>
     `).join('');
@@ -663,6 +670,16 @@ Examples:
 
       <div class="card">
         <div class="card-title">Contact Info</div>
+        <div style="margin-bottom:14px;">
+          <label>Status</label>
+          <select onchange="updateStatus(${contact.id}, this.value)" style="max-width:200px;">
+            <option value="new" ${!contact.status || contact.status === 'new' ? 'selected' : ''}>New</option>
+            <option value="contacted" ${contact.status === 'contacted' ? 'selected' : ''}>Contacted</option>
+            <option value="replied" ${contact.status === 'replied' ? 'selected' : ''}>Replied</option>
+            <option value="client" ${contact.status === 'client' ? 'selected' : ''}>Client</option>
+            <option value="not_interested" ${contact.status === 'not_interested' ? 'selected' : ''}>Not Interested</option>
+          </select>
+        </div>
         <div class="info-grid">
           <div class="info-item"><label>Email</label><p>${contact.email || 'Not provided'}</p></div>
           <div class="info-item"><label>Phone</label><p>${contact.phone || 'Not provided'}</p></div>
@@ -714,18 +731,27 @@ Examples:
             <div class="email-subject">${emails.day1.subject}</div>
             <div class="email-label">Body</div>
             <div class="email-body">${emails.day1.body}</div>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn btn-secondary" onclick="markSent(${contact.id}, 'day1')" style="font-size:12px;padding:6px 14px;">Mark Day 1 as Sent</button>
+            </div>
           </div>
           <div class="email-content" id="etab-day7">
             <div class="email-label">Subject</div>
             <div class="email-subject">${emails.day7.subject}</div>
             <div class="email-label">Body</div>
             <div class="email-body">${emails.day7.body}</div>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn btn-secondary" onclick="markSent(${contact.id}, 'day7')" style="font-size:12px;padding:6px 14px;">Mark Day 7 as Sent</button>
+            </div>
           </div>
           <div class="email-content" id="etab-day21">
             <div class="email-label">Subject</div>
             <div class="email-subject">${emails.day21.subject}</div>
             <div class="email-label">Body</div>
             <div class="email-body">${emails.day21.body}</div>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn btn-secondary" onclick="markSent(${contact.id}, 'day21')" style="font-size:12px;padding:6px 14px;">Mark Day 21 as Sent</button>
+            </div>
           </div>
         </div>` : `
         <div style="color:#6b7fa8;font-size:13px;margin-bottom:14px;">No email drafts generated yet.</div>
@@ -803,6 +829,42 @@ Examples:
     document.querySelectorAll('.email-content').forEach(c => c.classList.remove('active'));
     const tab = document.getElementById('etab-' + day);
     if (tab) tab.classList.add('active');
+  }
+
+  async function updateStatus(id, status) {
+    try {
+      await fetch(`/api/contacts/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      const contact = allContacts.find(c => c.id === id);
+      if (contact) {
+        contact.status = status;
+        renderSidebar(allContacts);
+      }
+    } catch (e) {
+      alert('Could not update status.');
+    }
+  }
+
+  async function markSent(id, emailDay) {
+    try {
+      await fetch(`/api/contacts/${id}/mark-sent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email_day: emailDay })
+      });
+      const contact = allContacts.find(c => c.id === id);
+      if (contact) {
+        contact.timeline = contact.timeline || [];
+        contact.timeline.push({ type: 'email_sent', date: new Date().toISOString(), note: `${emailDay.replace('day', 'Day ')} email marked as sent` });
+        renderContactDetail(contact);
+      }
+      alert(`${emailDay.replace('day', 'Day ')} email marked as sent.`);
+    } catch (e) {
+      alert('Could not mark as sent.');
+    }
   }
 
   async function deleteContact(id) {
