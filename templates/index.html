@@ -31,21 +31,18 @@
 
     .search-input {
       width: 100%; padding: 8px 12px; border-radius: 6px;
-      border: 2px solid #dce8ff; font-size: 13px; font-family: inherit;
-      color: #1a1a2e;
+      border: 2px solid #dce8ff; font-size: 13px; font-family: inherit; color: #1a1a2e;
     }
     .search-input:focus { outline: none; border-color: #2952cc; }
 
     .contacts-list { flex: 1; overflow-y: auto; }
-    .contact-item {
-      padding: 14px 16px; border-bottom: 1px solid #f0f4ff;
-      cursor: pointer; transition: background 0.1s;
-    }
+    .contact-item { padding: 14px 16px; border-bottom: 1px solid #f0f4ff; cursor: pointer; transition: background 0.1s; }
     .contact-item:hover { background: #f0f4ff; }
     .contact-item.active { background: #e8eeff; border-left: 3px solid #2952cc; }
     .contact-item-name { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
     .contact-item-sub { font-size: 12px; color: #6b7fa8; margin-bottom: 6px; }
     .contact-item-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
     .badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; color: #fff; text-transform: capitalize; }
     .badge-founder_prospect { background: #2952cc; }
     .badge-investor { background: #0891b2; }
@@ -66,15 +63,10 @@
     .empty-state { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 13px; }
 
     .main { padding: 24px; overflow-y: auto; }
-
     .view { display: none; }
     .view.active { display: block; }
 
-    .add-contact-btn {
-      width: 100%; padding: 10px; background: #2952cc; color: #fff;
-      border: none; border-radius: 6px; font-size: 13px; font-weight: 600;
-      cursor: pointer; font-family: inherit; margin-top: 10px;
-    }
+    .add-contact-btn { width: 100%; padding: 10px; background: #2952cc; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 10px; }
     .add-contact-btn:hover { background: #1e3fa8; }
 
     .card { background: #fff; border-radius: 10px; border: 2px solid #dce8ff; padding: 20px; margin-bottom: 16px; }
@@ -83,28 +75,17 @@
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .form-full { grid-column: 1 / -1; }
     label { font-size: 11px; color: #6b7fa8; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-    input, textarea, select {
-      width: 100%; padding: 9px 12px; border-radius: 6px;
-      border: 2px solid #dce8ff; background: #fff;
-      color: #1a1a2e; font-size: 13px; font-family: inherit;
-    }
+    input, textarea, select { width: 100%; padding: 9px 12px; border-radius: 6px; border: 2px solid #dce8ff; background: #fff; color: #1a1a2e; font-size: 13px; font-family: inherit; }
     input:focus, textarea:focus, select:focus { outline: none; border-color: #2952cc; }
     textarea { resize: vertical; }
 
-    .upload-zone {
-      border: 2px dashed #2952cc; border-radius: 10px; padding: 30px;
-      text-align: center; cursor: pointer; background: #f0f4ff;
-      transition: all 0.2s; margin-bottom: 12px;
-    }
+    .upload-zone { border: 2px dashed #2952cc; border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; background: #f0f4ff; transition: all 0.2s; margin-bottom: 12px; }
     .upload-zone:hover { background: #e8eeff; }
     .upload-zone-icon { font-size: 32px; margin-bottom: 8px; }
     .upload-zone-text { font-size: 14px; font-weight: 600; color: #2952cc; margin-bottom: 4px; }
     .upload-zone-sub { font-size: 12px; color: #6b7fa8; }
 
-    .btn {
-      padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600;
-      cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
-    }
+    .btn { padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
     .btn-primary { background: #2952cc; color: #fff; }
     .btn-primary:hover { background: #1e3fa8; }
     .btn-secondary { background: #fff; color: #2952cc; border: 2px solid #2952cc; }
@@ -124,7 +105,6 @@
 
     .enrichment-box { background: #f0f4ff; border-radius: 8px; padding: 14px; border: 1px solid #dce8ff; }
     .enrichment-text { font-size: 13px; color: #4a5568; line-height: 1.6; }
-
     .source-link { font-size: 12px; color: #2952cc; text-decoration: none; display: flex; align-items: center; gap: 4px; }
     .source-link:hover { text-decoration: underline; }
     .source-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -138,12 +118,7 @@
 
     .email-tabs { overflow: hidden; border-radius: 8px; border: 2px solid #dce8ff; }
     .email-tab-nav { display: flex; background: #f0f4ff; border-bottom: 2px solid #dce8ff; }
-    .email-tab-btn {
-      flex: 1; padding: 10px; border: none; cursor: pointer;
-      font-size: 13px; font-weight: 600; background: transparent;
-      color: #6b7fa8; border-bottom: 3px solid transparent;
-      transition: all 0.15s; font-family: inherit;
-    }
+    .email-tab-btn { flex: 1; padding: 10px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; background: transparent; color: #6b7fa8; border-bottom: 3px solid transparent; transition: all 0.15s; font-family: inherit; }
     .email-tab-btn.active { background: #fff; color: #2952cc; border-bottom-color: #2952cc; }
     .email-content { padding: 16px; display: none; background: #fff; }
     .email-content.active { display: block; }
@@ -151,12 +126,7 @@
     .email-body { font-size: 14px; color: #4a5568; line-height: 1.8; white-space: pre-wrap; }
     .email-label { font-size: 11px; color: #6b7fa8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
 
-    .spinner {
-      display: inline-block; width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-      margin-right: 8px; vertical-align: middle;
-    }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .hidden { display: none; }
@@ -165,11 +135,7 @@
     .info-msg { background: #f0f4ff; border: 2px solid #2952cc; border-radius: 6px; padding: 12px; color: #2952cc; font-size: 13px; margin-top: 10px; }
 
     .tabs { display: flex; gap: 0; border-bottom: 2px solid #dce8ff; margin-bottom: 20px; flex-wrap: wrap; }
-    .tab-btn {
-      padding: 10px 16px; border: none; cursor: pointer; font-size: 13px; font-weight: 600;
-      background: transparent; color: #6b7fa8; border-bottom: 3px solid transparent;
-      font-family: inherit; transition: all 0.15s; margin-bottom: -2px;
-    }
+    .tab-btn { padding: 10px 16px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; background: transparent; color: #6b7fa8; border-bottom: 3px solid transparent; font-family: inherit; transition: all 0.15s; margin-bottom: -2px; }
     .tab-btn.active { color: #2952cc; border-bottom-color: #2952cc; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -235,6 +201,10 @@
           <div id="card-preview" class="hidden">
             <img id="card-image-preview" style="max-width: 100%; border-radius: 8px; margin-bottom: 12px;">
             <div id="qr-result"></div>
+            <div style="margin-bottom:12px;">
+              <label>Additional context about this person</label>
+              <textarea id="card-extra-context" rows="3" placeholder="e.g. Met at Tokyo Founders Summit, mentioned struggling with hiring, interested in Japan market entry..."></textarea>
+            </div>
             <button class="btn btn-primary" id="scan-btn" onclick="scanCard()">Scan Card</button>
           </div>
           <div id="scan-msg"></div>
@@ -272,14 +242,7 @@
           <div class="form-grid">
             <div class="form-full">
               <label>Paste info here</label>
-              <textarea id="paste-raw" rows="8" placeholder="Paste anything here...
-
-Examples:
-- John Smith | CEO at FinFlow KK | john@finflow.jp | +81-90-1234-5678
-- https://linkedin.com/in/johnsmith
-- Email signature text
-- Voice note transcript
-- Any combination of the above"></textarea>
+              <textarea id="paste-raw" rows="8" placeholder="Paste anything here..."></textarea>
             </div>
             <div class="form-full">
               <label>Event where you met</label>
@@ -323,7 +286,7 @@ Examples:
             <div><label>Date met</label><input type="date" id="m-date"></div>
             <div class="form-full">
               <label>Notes from the conversation</label>
-              <textarea id="m-notes" rows="4" placeholder="What did you talk about? What stood out? Why might they be relevant to SYC?"></textarea>
+              <textarea id="m-notes" rows="4" placeholder="What did you talk about? What stood out?"></textarea>
             </div>
           </div>
           <div class="btn-row">
@@ -371,6 +334,7 @@ Examples:
         <div class="contact-item-meta">
           <span class="badge badge-${c.category || 'unknown'}">${(c.category || 'unclassified').replace(/_/g, ' ')}</span>
           <span class="status-badge status-${c.status || 'new'}">${(c.status || 'new').replace(/_/g, ' ')}</span>
+          ${c.syc_company && c.syc_company !== 'unknown' ? `<span style="font-size:10px;color:#6b7fa8;">${c.syc_company}</span>` : ''}
         </div>
       </div>
     `).join('');
@@ -452,7 +416,12 @@ Examples:
       const res = await fetch('/api/scan-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: cardImageBase64, media_type: cardMediaType, qr_url: detectedQRUrl })
+        body: JSON.stringify({
+          image: cardImageBase64,
+          media_type: cardMediaType,
+          qr_url: detectedQRUrl,
+          extra_context: document.getElementById('card-extra-context').value
+        })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
@@ -460,7 +429,7 @@ Examples:
       scannedCards = data.cards;
       renderScannedCards();
       document.getElementById('scanned-contacts').classList.remove('hidden');
-      document.getElementById('scan-msg').innerHTML = `<div class="success-msg">Found ${scannedCards.length} contact${scannedCards.length !== 1 ? 's' : ''}${detectedQRUrl ? ' and scraped QR code URL for extra info' : ''}. Add event and notes below then save.</div>`;
+      document.getElementById('scan-msg').innerHTML = `<div class="success-msg">Found ${scannedCards.length} contact${scannedCards.length !== 1 ? 's' : ''}. Add event and notes below then save.</div>`;
     } catch (e) {
       document.getElementById('scan-msg').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
     }
@@ -504,6 +473,7 @@ Examples:
     scannedCards = [];
     cardImageBase64 = null;
     detectedQRUrl = null;
+    document.getElementById('card-extra-context').value = '';
     document.getElementById('card-input').value = '';
     document.getElementById('card-preview').classList.add('hidden');
     document.getElementById('scanned-contacts').classList.add('hidden');
@@ -638,10 +608,8 @@ Examples:
     renderSidebar(allContacts);
     const contact = allContacts.find(c => c.id === id);
     if (!contact) return;
-
     showView('contact');
     renderContactDetail(contact);
-
     if (!contact.enrichment || !contact.enrichment.category) {
       enrichContact(id);
     }
@@ -660,9 +628,12 @@ Examples:
           <div class="contact-role">${[contact.title, contact.company].filter(Boolean).join(' at ')}</div>
           ${contact.event ? `<span class="contact-event">${contact.event}</span>` : ''}
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span class="badge badge-${contact.category || 'unknown'}" style="font-size:12px;padding:5px 14px;">
             ${(contact.category || 'unclassified').replace(/_/g, ' ')}
+          </span>
+          <span style="font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;background:${contact.syc_company === 'SmartStart Japan' ? '#0d9488' : contact.syc_company === 'Both' ? '#7c3aed' : '#2952cc'};color:#fff;">
+            ${contact.syc_company || 'Detecting...'}
           </span>
           <button onclick="deleteContact(${contact.id})" style="padding:6px 12px;border-radius:6px;border:2px solid #ffb0b0;background:#fff0f0;color:#c0392b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Delete</button>
         </div>
@@ -670,15 +641,25 @@ Examples:
 
       <div class="card">
         <div class="card-title">Contact Info</div>
-        <div style="margin-bottom:14px;">
-          <label>Status</label>
-          <select onchange="updateStatus(${contact.id}, this.value)" style="max-width:200px;">
-            <option value="new" ${!contact.status || contact.status === 'new' ? 'selected' : ''}>New</option>
-            <option value="contacted" ${contact.status === 'contacted' ? 'selected' : ''}>Contacted</option>
-            <option value="replied" ${contact.status === 'replied' ? 'selected' : ''}>Replied</option>
-            <option value="client" ${contact.status === 'client' ? 'selected' : ''}>Client</option>
-            <option value="not_interested" ${contact.status === 'not_interested' ? 'selected' : ''}>Not Interested</option>
-          </select>
+        <div style="margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap;">
+          <div>
+            <label>Status</label>
+            <select onchange="updateStatus(${contact.id}, this.value)" style="max-width:200px;">
+              <option value="new" ${!contact.status || contact.status === 'new' ? 'selected' : ''}>New</option>
+              <option value="contacted" ${contact.status === 'contacted' ? 'selected' : ''}>Contacted</option>
+              <option value="replied" ${contact.status === 'replied' ? 'selected' : ''}>Replied</option>
+              <option value="client" ${contact.status === 'client' ? 'selected' : ''}>Client</option>
+              <option value="not_interested" ${contact.status === 'not_interested' ? 'selected' : ''}>Not Interested</option>
+            </select>
+          </div>
+          <div>
+            <label>Company</label>
+            <select onchange="updateSycCompany(${contact.id}, this.value)" style="max-width:220px;">
+              <option value="Scaling Your Company" ${contact.syc_company === 'Scaling Your Company' ? 'selected' : ''}>Scaling Your Company</option>
+              <option value="SmartStart Japan" ${contact.syc_company === 'SmartStart Japan' ? 'selected' : ''}>SmartStart Japan</option>
+              <option value="Both" ${contact.syc_company === 'Both' ? 'selected' : ''}>Both</option>
+            </select>
+          </div>
         </div>
         <div class="info-grid">
           <div class="info-item"><label>Email</label><p>${contact.email || 'Not provided'}</p></div>
@@ -704,12 +685,7 @@ Examples:
           ${sources.length > 0 ? `
             <div style="font-size:12px;color:#6b7fa8;font-weight:600;margin-bottom:6px;margin-top:4px;">SOURCES</div>
             <div style="display:flex;flex-direction:column;gap:4px;">
-              ${sources.map(s => `
-                <a href="${s.url}" target="_blank" class="source-link">
-                  <span>🔗</span>
-                  <span>${s.title || s.url}</span>
-                </a>
-              `).join('')}
+              ${sources.map(s => `<a href="${s.url}" target="_blank" class="source-link"><span>🔗</span><span>${s.title || s.url}</span></a>`).join('')}
             </div>` : ''}
         </div>
       </div>` : `<div class="card"><div class="card-title">AI Context</div><div style="color:#6b7fa8;font-size:13px;" id="enrich-status">Enriching contact...</div></div>`}
@@ -780,7 +756,6 @@ Examples:
   async function enrichContact(id) {
     const contact = allContacts.find(c => c.id === id);
     if (!contact) return;
-
     try {
       const res = await fetch('/api/enrich', {
         method: 'POST',
@@ -791,6 +766,7 @@ Examples:
       if (data.success) {
         contact.enrichment = data.enrichment;
         contact.category = data.enrichment.category || contact.category;
+        contact.syc_company = data.syc_company || contact.syc_company;
         renderContactDetail(contact);
         renderSidebar(allContacts);
       }
@@ -803,7 +779,6 @@ Examples:
   async function generateEmails(id) {
     const btn = document.getElementById('gen-email-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generating...'; }
-
     try {
       const res = await fetch(`/api/generate-emails/${id}`, { method: 'POST' });
       const data = await res.json();
@@ -829,6 +804,24 @@ Examples:
     document.querySelectorAll('.email-content').forEach(c => c.classList.remove('active'));
     const tab = document.getElementById('etab-' + day);
     if (tab) tab.classList.add('active');
+  }
+
+  async function updateSycCompany(id, syc_company) {
+    try {
+      await fetch(`/api/contacts/${id}/syc-company`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syc_company })
+      });
+      const contact = allContacts.find(c => c.id === id);
+      if (contact) {
+        contact.syc_company = syc_company;
+        renderContactDetail(contact);
+        renderSidebar(allContacts);
+      }
+    } catch (e) {
+      alert('Could not update company.');
+    }
   }
 
   async function updateStatus(id, status) {
