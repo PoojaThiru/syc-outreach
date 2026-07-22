@@ -17,6 +17,7 @@ SERPER_API_KEY = os.getenv("SERPER_API_KEY")
 FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 APP_PASSWORD = os.getenv("APP_PASSWORD", "ScalingYourCompany2026")
+N8N_WEBHOOK_URL = "https://pthirupu.app.n8n.cloud/webhook/a49d8f84-0b23-4f95-92c8-de51214f9b07"
 
 def get_db():
     conn = psycopg2.connect(DATABASE_URL)
@@ -41,6 +42,7 @@ def init_db():
             notes TEXT,
             category TEXT DEFAULT 'unknown',
             status TEXT DEFAULT 'new',
+            syc_company TEXT DEFAULT 'unknown',
             enrichment JSONB DEFAULT '{}',
             web_context JSONB DEFAULT '{}',
             emails JSONB DEFAULT '{}',
@@ -48,9 +50,8 @@ def init_db():
             created_at TIMESTAMP DEFAULT NOW()
         )
     """)
-    cur.execute("""
-        ALTER TABLE contacts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'new'
-    """)
+    cur.execute("ALTER TABLE contacts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'new'")
+    cur.execute("ALTER TABLE contacts ADD COLUMN IF NOT EXISTS syc_company TEXT DEFAULT 'unknown'")
     conn.commit()
     cur.close()
     conn.close()
@@ -63,8 +64,7 @@ def serper_search(query):
     try:
         res = requests.post("https://google.serper.dev/search",
             headers={"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"},
-            json={"q": query, "num": 5},
-            timeout=8
+            json={"q": query, "num": 5}, timeout=8
         )
         data = res.json()
         organic = data.get("organic", [])
@@ -90,14 +90,19 @@ def scrape_website(url):
             url = "https://" + url
         res = requests.post("https://api.firecrawl.dev/v0/scrape",
             headers={"Authorization": f"Bearer {FIRECRAWL_API_KEY}", "Content-Type": "application/json"},
-            json={"url": url, "pageOptions": {"onlyMainContent": True}},
-            timeout=15
+            json={"url": url, "pageOptions": {"onlyMainContent": True}}, timeout=15
         )
         data = res.json()
         content = data.get("data", {}).get("markdown", "")
         return content[:2000]
     except:
         return ""
+
+def send_to_sheets(contact):
+    try:
+        requests.post(N8N_WEBHOOK_URL, json=contact, timeout=10)
+    except:
+        pass
 
 CARD_SCAN_PROMPT = """You are scanning a business card image. Extract ALL contact information visible on the card.
 If there are multiple business cards in the image, extract each one separately.
@@ -140,27 +145,42 @@ Return ONLY valid JSON, no markdown:
 
 Use empty string for any field not found. Never invent information."""
 
-ENRICH_PROMPT = """You are building a detailed contact intelligence profile for Tyson Batino, CEO of Scaling Your Company (SYC) in Japan.
+ENRICH_PROMPT = """You are building a detailed contact intelligence profile for Tyson Batino who runs two companies in Japan:
 
-You have been given contact information plus multiple sources of web research about this person. Synthesize all of this into a rich, useful profile.
+1. SCALING YOUR COMPANY (SYC) — business coaching and scaling services for founders and operators already running businesses in Japan. Helps with management structure, team building, operations, and growth.
+
+2. SMARTSTART JAPAN — helps foreign entrepreneurs and companies enter the Japanese market. Covers Business Manager Visa applications, company setup in Japan, immigration support, and market entry strategy.
+
+Based on the contact information and web research, build a rich profile AND determine which company is most relevant.
+
+Rules for company assignment:
+- SmartStart Japan: foreign founders wanting to enter Japan, Business Manager Visa needs, company setup in Japan, immigration, market entry
+- Scaling Your Company: founders already operating who need coaching, scaling help, management structure, business growth
+- Both: if they need both market entry AND scaling help
+- Use the manual_company field if provided — it overrides your detection
 
 Return ONLY valid JSON, no markdown:
 {
-  "company_description": "what the company does, who their customers are, their market",
+  "company_description": "what the company does, who their customers are",
   "industry": "specific industry",
-  "stage_and_size": "funding stage, team size, revenue stage if known",
-  "recent_news": "any recent news, launches, funding rounds, press in 2024-2025",
-  "person_background": "career history, expertise, notable background",
-  "relevance_to_syc": "why this person matters to Tyson and SYC specifically",
-  "talking_points": "2-3 specific things Tyson could reference in a follow-up email",
+  "stage_and_size": "funding stage, team size if known",
+  "recent_news": "any recent news, launches, funding in 2024-2025",
+  "person_background": "career history, expertise",
+  "relevance_to_syc": "why this person matters and which SYC company can help them",
+  "talking_points": "2-3 specific things Tyson could reference",
   "enrichment_notes": "anything else useful",
+  "syc_company": "Scaling Your Company|SmartStart Japan|Both",
   "category": "founder_prospect|investor|press_media|corporate_partner|service_provider|community_connector|other",
   "category_reason": "why this category"
 }"""
 
-CLASSIFY_PROMPT = """You are an AI assistant for Tyson Batino, CEO of Scaling Your Company (SYC) and SmartStart Japan.
+CLASSIFY_PROMPT = """You are an AI assistant for Tyson Batino who runs Scaling Your Company (SYC) and SmartStart Japan.
 
-Read the contact record including all web research and enrichment data, then write highly personalised follow-up email drafts.
+Read the contact record and write personalised follow-up email drafts. The syc_company field tells you which company is relevant — tailor the emails accordingly.
+
+For Scaling Your Company contacts: focus on business coaching, scaling, management, operations.
+For SmartStart Japan contacts: focus on Japan market entry, Business Manager Visa, company setup.
+For Both: mention both angles.
 
 Use Tyson's voice:
 - Direct and warm. No corporate fluff.
@@ -168,13 +188,15 @@ Use Tyson's voice:
 - Short sentences. Active voice. Max 6 lines per email.
 - Signs off as Tyson
 
-EXAMPLES OF TYSON'S VOICE:
-"Hey Sarah, Really enjoyed our chat yesterday. The payments infrastructure problem you're solving for SMEs is one I see a lot of founders underestimate until it becomes a bottleneck at 20+ people. Would love to stay in touch. Tyson"
+EXAMPLES:
+"Hey Sarah, Really enjoyed our chat. The management layer challenge you're facing at 12 people is exactly when founders need to get ahead of it. That's what we focus on at SYC. Tyson"
+
+"Hey Marco, Great meeting you. If you're serious about the Business Manager Visa, SmartStart can walk you through the full process — we've done it for dozens of founders. Tyson"
 
 Return ONLY valid JSON:
 {
-  "follow_up_angle": "one sentence specific hook for this person using real details",
-  "flags": "any issues or gaps noticed, or empty string",
+  "follow_up_angle": "one sentence specific hook",
+  "flags": "any issues or gaps, or empty string",
   "day1": { "subject": "...", "body": "..." },
   "day7": { "subject": "...", "body": "..." },
   "day21": { "subject": "...", "body": "..." }
@@ -236,20 +258,22 @@ def add_contact():
         conn = get_db()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
-            INSERT INTO contacts (name, title, company, email, phone, website, linkedin, address, event, date_met, notes, category, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO contacts (name, title, company, email, phone, website, linkedin, address, event, date_met, notes, category, status, syc_company)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
         """, (
             c.get("name", ""), c.get("title", ""), c.get("company", ""),
             c.get("email", ""), c.get("phone", ""), c.get("website", ""),
             c.get("linkedin", ""), c.get("address", ""), c.get("event", ""),
-            c.get("date_met", ""), c.get("notes", ""), "unknown", "new"
+            c.get("date_met", ""), c.get("notes", ""), "unknown", "new",
+            c.get("syc_company", "unknown")
         ))
         row = cur.fetchone()
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({"success": True, "contact": row_to_dict(row)})
+        contact = row_to_dict(row)
+        return jsonify({"success": True, "contact": contact})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
@@ -281,6 +305,21 @@ def update_status(contact_id):
         timeline.append({"type": "status_change", "date": datetime.now().isoformat(), "note": f"Status updated to {status}"})
         cur.execute("UPDATE contacts SET status = %s, timeline = %s WHERE id = %s",
             (status, json.dumps(timeline), contact_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route("/api/contacts/<int:contact_id>/syc-company", methods=["POST"])
+def update_syc_company(contact_id):
+    data = request.json
+    syc_company = data.get("syc_company", "")
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE contacts SET syc_company = %s WHERE id = %s", (syc_company, contact_id))
         conn.commit()
         cur.close()
         conn.close()
@@ -326,9 +365,7 @@ def parse_paste():
         if scraped_context:
             content += f"\n\nScraped content from URL:\n{scraped_context}"
         response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=800,
-            system=PASTE_PROMPT,
+            model="claude-sonnet-4-6", max_tokens=800, system=PASTE_PROMPT,
             messages=[{"role": "user", "content": content}]
         )
         text = response.content[0].text
@@ -344,17 +381,25 @@ def scan_card():
     image_data = data.get("image")
     media_type = data.get("media_type", "image/jpeg")
     qr_url = data.get("qr_url", "")
+    extra_context = data.get("extra_context", "")
 
     qr_context = ""
     if qr_url:
         qr_context = scrape_website(qr_url)
 
     try:
+        extra = ""
+        if extra_context:
+            extra += f"\n\nAdditional context provided by the user:\n{extra_context}"
+        if qr_context:
+            extra += f"\n\nScraped from QR code ({qr_url}):\n{qr_context}"
+
         content = [
             {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_data}},
-            {"type": "text", "text": CARD_SCAN_PROMPT + (f"\n\nAdditional context from QR code ({qr_url}):\n{qr_context}" if qr_context else "")}
+            {"type": "text", "text": CARD_SCAN_PROMPT + extra}
         ]
-        response = client.messages.create(model="claude-sonnet-4-6", max_tokens=1000, messages=[{"role": "user", "content": content}])
+        response = client.messages.create(model="claude-sonnet-4-6", max_tokens=1000,
+            messages=[{"role": "user", "content": content}])
         text = response.content[0].text
         clean = text.replace("```json", "").replace("```", "").strip()
         result = json.loads(clean)
@@ -390,26 +435,29 @@ def enrich_contact():
     try:
         enrich_input = {**contact, "web_research": web_context}
         response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1200,
-            system=ENRICH_PROMPT,
+            model="claude-sonnet-4-6", max_tokens=1200, system=ENRICH_PROMPT,
             messages=[{"role": "user", "content": f"Contact and research:\n{json.dumps(enrich_input, indent=2)}"}]
         )
         text = response.content[0].text
         clean = text.replace("```json", "").replace("```", "").strip()
         result = json.loads(clean)
 
+        syc_company = result.get("syc_company", "unknown")
+
         conn = get_db()
         cur = conn.cursor()
         cur.execute(
-            "UPDATE contacts SET enrichment = %s, web_context = %s, category = %s WHERE id = %s",
-            (json.dumps(result), json.dumps(web_context), result.get("category", "other"), contact.get("id"))
+            "UPDATE contacts SET enrichment = %s, web_context = %s, category = %s, syc_company = %s WHERE id = %s",
+            (json.dumps(result), json.dumps(web_context), result.get("category", "other"), syc_company, contact.get("id"))
         )
         conn.commit()
         cur.close()
         conn.close()
 
-        return jsonify({"success": True, "enrichment": result})
+        updated_contact = {**contact, "enrichment": result, "web_context": web_context, "syc_company": syc_company}
+        send_to_sheets(updated_contact)
+
+        return jsonify({"success": True, "enrichment": result, "syc_company": syc_company})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
@@ -428,9 +476,7 @@ def generate_emails(contact_id):
 
         contact = row_to_dict(contact)
         response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1500,
-            system=CLASSIFY_PROMPT,
+            model="claude-sonnet-4-6", max_tokens=1500, system=CLASSIFY_PROMPT,
             messages=[{"role": "user", "content": f"Contact record:\n{json.dumps(contact, indent=2)}"}]
         )
         text = response.content[0].text
@@ -442,10 +488,8 @@ def generate_emails(contact_id):
 
         conn = get_db()
         cur = conn.cursor()
-        cur.execute(
-            "UPDATE contacts SET emails = %s, timeline = %s WHERE id = %s",
-            (json.dumps(result), json.dumps(timeline), contact_id)
-        )
+        cur.execute("UPDATE contacts SET emails = %s, timeline = %s WHERE id = %s",
+            (json.dumps(result), json.dumps(timeline), contact_id))
         conn.commit()
         cur.close()
         conn.close()
@@ -464,10 +508,8 @@ def add_timeline_entry(contact_id):
         row = cur.fetchone()
         if not row:
             return jsonify({"success": False, "error": "Contact not found"})
-
         timeline = row["timeline"] or []
         timeline.append({"type": data.get("type", "note"), "date": datetime.now().isoformat(), "note": data.get("note", "")})
-
         cur.execute("UPDATE contacts SET timeline = %s WHERE id = %s", (json.dumps(timeline), contact_id))
         conn.commit()
         cur.close()
