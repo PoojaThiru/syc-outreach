@@ -100,7 +100,22 @@ def scrape_website(url):
 
 def send_to_sheets(contact):
     try:
-        requests.post(N8N_WEBHOOK_URL, json=contact, timeout=10)
+        payload = {
+            "name": contact.get("name", ""),
+            "title": contact.get("title", ""),
+            "company": contact.get("company", ""),
+            "email": contact.get("email", ""),
+            "phone": contact.get("phone", ""),
+            "website": contact.get("website", ""),
+            "event": contact.get("event", ""),
+            "date_met": contact.get("date_met", ""),
+            "category": contact.get("category", ""),
+            "status": contact.get("status", ""),
+            "syc_company": contact.get("syc_company", ""),
+            "notes": contact.get("notes", ""),
+            "created_at": contact.get("created_at", "")
+        }
+        requests.post(N8N_WEBHOOK_URL, json=payload, timeout=10)
     except:
         pass
 
